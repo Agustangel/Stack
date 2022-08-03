@@ -13,6 +13,7 @@
 // 2 4 . . .  .  . .
 
 #define INIT_SIZE 10
+#define MULTIPLIER 2
 
 typedef struct stack_t
 {
@@ -32,9 +33,9 @@ enum error_names
 {
     ERR_INC_INPUT = -5,
     ERR_OUT_MEMORY  = -4,
-    ERR_BAD_READ  = -3,
-    ERR_BAD_PTR   = -2
+    ERR_STACK_UNDERFLOW  = -3,
+    ERR_STACK_OVERFLOW   = -2
 };
 
 
-stack_t* create_stack();
+stack_t* stack_create();
