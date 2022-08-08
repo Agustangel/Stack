@@ -9,14 +9,14 @@
 
 int main()
 {
-    logger_init(0, "stack.log");
-    logger_set_level(INFO);
+    logger_init(3, "stack.log");
+    // logger_set_level(INFO);
 
     stack_t stack;
 
     int init_size = 5;
 
-    int ret = stack_init(&stack, 5);
+    int ret = stack_init(&stack, init_size);
     
     STACK_OK(&stack);
     stack_push(&stack, 1);
@@ -31,17 +31,12 @@ int main()
     stack_push(&stack, 32);
 
     STACK_OK(&stack);
-    stack_pop(&stack);
-
-    STACK_OK(&stack);
-    stack_pop(&stack);
-
-    STACK_OK(&stack);
-    stack_pop(&stack);
-
-    STACK_OK(&stack);
     stack_peek(&stack);
     STACK_OK(&stack);
+
+    stack_dump(&stack);
+
+    stack_destroy(&stack);
 
     logger_finalize(file);
 
