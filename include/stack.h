@@ -78,7 +78,7 @@ int stack_resize_decrease(stack_t* stack);
 int stack_resize_increase(stack_t* stack);
 int stack_destroy(stack_t* stack);
 int stack_verify(stack_t* stack);
-void stack_hash(int *key, size_t len);
+void stack_hash(char *key, size_t len);
 
 //! Macros STACK_OK
 /*! macros to describe the error. */

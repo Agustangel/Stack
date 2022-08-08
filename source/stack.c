@@ -28,6 +28,12 @@ int stack_init(stack_t* stack, int init_size)
         return ERR_NULL_POINTER;
     }
 
+    if(init_size <= 0)
+    {
+        fprintf(stderr, RED "ERROR: " RESET "INCORRECT SIZE OF STACK.\n");
+        exit(ERR_INC_INPUT);
+    }
+
     stack->canary_1 = (int*) 0xDEADBEAF;
     stack->canary_2 = (int*) 0xBACBEDEF;
     stack->canary_3 = (int*) 0xAD666FED;
@@ -47,7 +53,7 @@ int stack_init(stack_t* stack, int init_size)
 
     for(int idx = 0; idx < init_size; ++idx)
     {
-        *(stack->data + sizeof(canary_begin_array) + idx * sizeof(int)) = POISON;
+        *((char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)) = POISON;
     }
 
     return 0;
@@ -96,7 +102,6 @@ int stack_resize_increase(stack_t* stack)
         else
         {
             return ERR_OUT_MEMORY;
-            // must not be exited
         }
     }
 
@@ -117,7 +122,6 @@ int stack_resize_increase(stack_t* stack)
         else
         {
             return ERR_OUT_MEMORY;
-            // must not be exited
         }
     }
 }
@@ -142,7 +146,16 @@ int stack_resize_decrease(stack_t* stack)
         stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
-        stack->data = (int*) realloc(stack->data, stack->capacity * sizeof(int));
+        int* check_ptr = (int*) realloc(stack->data, stack->capacity * sizeof(int));
+        
+        if(check_ptr != NULL)
+        {
+            stack->data = check_ptr;
+        }
+        else
+        {
+            return ERR_OUT_MEMORY;
+        }
     }
 
     if(flag_multiplier_upper == ONEHALF)
@@ -153,7 +166,16 @@ int stack_resize_decrease(stack_t* stack)
         stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
-        stack->data = (int*) realloc(stack->data, stack->capacity * sizeof(int));
+        int* check_ptr = (int*) realloc(stack->data, stack->capacity * sizeof(int));
+        
+        if(check_ptr != NULL)
+        {
+            stack->data = check_ptr;
+        }
+        else
+        {
+            return ERR_OUT_MEMORY;
+        }
     }
 }
 
@@ -182,9 +204,10 @@ int stack_pop(stack_t* stack)
         stack_resize_decrease(stack);
     }
 
-    stack_hash(stack->data + sizeof(canary_begin_array_), stack->count);
+    stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
+    previous_hash = hash;
 
-    return *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
+    return *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
 }
 
 //===================================================================
@@ -202,10 +225,11 @@ int stack_peek(const stack_t* stack)
     {
         return ERR_STACK_UNDERFLOW;
     }
-    
-    stack_hash(stack->data + sizeof(canary_begin_array_), stack->count);
 
-    return *(stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(int));
+    stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
+    previous_hash = hash;
+
+    return *((char*) stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(int));
 }
 
 //===================================================================
@@ -217,8 +241,8 @@ int stack_push(stack_t* stack, int value)
         return ERR_NULL_POINTER;
     }
 
-    //LOG("stack->count = %d\n", stack->count);
-    //LOG("stack->capacity = %d\n", stack->capacity);
+    LOG("stack->count = %d\n", stack->count);
+    LOG("stack->capacity = %d\n", stack->capacity);
 
     int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
 
@@ -227,13 +251,17 @@ int stack_push(stack_t* stack, int value)
         stack_resize_increase(stack);
     }
 
-    *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)) = value;
+    *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)) = value;
 
-    //LOG("value = %d\n", value);
+    LOG("value = %d\n", value);
 
     ++(stack->count);
 
-    stack_hash(stack->data + sizeof(canary_begin_array_), stack->count);
+    LOG("stack->count = %d\n", stack->count);
+    LOG("stack->capacity = %d\n", stack->capacity);
+
+    stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
+    previous_hash = hash;
 }
 
 //===================================================================
@@ -244,19 +272,39 @@ int stack_dump(stack_t* stack)
     {
         return ERR_NULL_POINTER;
     }
+    
+    int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
 
-    //LOG("stack->count = %d\n", stack->count);
+    printf("-----------------------------------------------------------\n");
 
-    printf("stack->count = %d\n", stack->count);
-    printf("stack->capacity = %d\n", stack->count);
+    printf("\t\t       Canaries and hash \n");
+    printf("\tValues \t\t\t\t    Addresses\n");
+    printf("canary_1_ = %p \t\t\t %p\n", canary_1_, &canary_1_);
+    printf("canary_2_ = %p \t\t\t %p\n", canary_2_, &canary_2_);
+    printf("canary_3_ = %p \t\t\t %p\n", canary_3_, &canary_3_);
+    printf("canary_begin_array_ = %p \t %p\n", canary_begin_array_, &canary_begin_array_);
+    printf("  hash    = %d \t\t\t %p\n", hash, &hash);
     printf("\n");
 
-    printf("Elements of stack \tAddresses\n");
+    printf("-----------------------------------------------------------\n");
+
+    printf("\n");
+    printf("stack->count = %d\n", stack->count);
+    printf("real_capacity = %d\n", real_capacity);
+    printf("\n");
+
+    printf("-----------------------------------------------------------\n");
+
+    printf("\n");
+    printf("Elements of stack \t\t\t   Addresses\n");
     for(int idx = 0; idx < stack->count; ++idx)
     {
-        printf("stack->data[%d] = %d\t", idx,  *(stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)));
-        printf("%p\n", stack->data + sizeof(canary_begin_array_) + idx * sizeof(int));
+        printf("stack->data[%d] = %d\t\t\t", idx,  *((char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)));
+        printf("%p\n", (char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(int));
     }
+    printf("\n");
+
+    printf("-----------------------------------------------------------\n");
 }
 
 //===================================================================
@@ -289,7 +337,7 @@ int stack_verify(stack_t* stack)
 
     for(int idx = 0; idx < stack->count; ++idx)
     {
-        if(*(stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)) == POISON)
+        if(*((char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)) == POISON)
         {
             return ERR_INC_INPUT;
         }
@@ -305,15 +353,13 @@ int stack_verify(stack_t* stack)
 
 //===================================================================
 
-void stack_hash(int *key, size_t len)
+void stack_hash(char *key, size_t len)
 {
-    previous_hash = hash;
-
     uint32_t i = 0;
 
     for(i = 0; i < len; ++i)
     {
-        hash += key[i];
+        hash += *(key + i * sizeof(int));
         hash += (hash << 10);
         hash ^= (hash >> 6);
     }
