@@ -9,17 +9,6 @@
 #define BROWN "\033[0;33m"
 #define YELLOW "\e[0;33m"
 #define RESET "\033[0m"
-/*
-    1) Memory realloc (increase and decrease) 
-    2) sturct stack_t, stack_push, stack_pop, stack_print, stack_init, stack_destroy
-    3) stack_verify (data initialized, no poision, correct fields)
-    4) canaries
-    5) hash function
-    6) conditional compilation
-    7) stack_dump
-    8) error hanling */
-
-// 2 4 . . .  .  . .
 
 #define MULTIPLIER_1 2
 #define MULTIPLIER_2 1.5
@@ -35,17 +24,22 @@
 
 typedef struct stack_t
 {
-
-    int* canary_1;
+    #ifdef SAFETY
+        int* canary_1;
+    #endif
 
     int* data;
 
-    int* canary_2;
+    #ifdef SAFETY
+        int* canary_2;
+    #endif
 
     int count;
     int capacity;
 
-    int* canary_3;
+    #ifdef SAFETY
+        int* canary_3;
+    #endif
 
 } stack_t;
 
