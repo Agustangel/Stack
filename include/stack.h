@@ -1,5 +1,14 @@
 
-
+/*! enumeration colors and their corresponding ANSI values. */
+#define BLACK "\033[0;30m"
+#define BLUE "\033[0;34m"
+#define GREEN "\033[0;32m"
+#define CYAN "\033[0;36m"
+#define RED "\033[0;31m"
+#define PURPLE "\033[0;35m"
+#define BROWN "\033[0;33m"
+#define YELLOW "\e[0;33m"
+#define RESET "\033[0m"
 /*
     1) Memory realloc (increase and decrease) 
     2) sturct stack_t, stack_push, stack_pop, stack_print, stack_init, stack_destroy
@@ -49,12 +58,25 @@ enum flags_multiplier
 
 enum error_names
 {
-    ERR_INC_INPUT        = -5,
-    ERR_OUT_MEMORY       = -4,
-    ERR_STACK_UNDERFLOW  = -3,
-    ERR_STACK_OVERFLOW   = -2,
-    ERR_NULL_POINTER     = -1
+    ERR_INC_INPUT        = -7,
+    ERR_OUT_MEMORY       = -6,
+    ERR_STACK_UNDERFLOW  = -5,
+    ERR_STACK_OVERFLOW   = -4,
+    ERR_STACK_ATTACKED   = -3,
+    ERR_NULL_POINTER     = -2,
+    ERR_NEGATIVE_COUNT   = -1
 };
+
+
+int stack_init(stack_t* stack, int init_size);
+int stack_push(stack_t* stack, int value);
+int stack_pop(stack_t* stack);
+int stack_peek(const stack_t* stack);
+int stack_dump(stack_t* stack);
+int stack_resize_decrease(stack_t* stack);
+int stack_resize_increase(stack_t* stack);
+int stack_destroy(stack_t* stack);
+int stack_verify(stack_t* stack);
 
 //! Macros HANDLE_ERROR
 /*! macros to describe the error. */
@@ -68,13 +90,37 @@ enum error_names
         exit(errcode);                     \
     };
 
-
-int stack_init(stack_t* stack, int init_size);
-int stack_push(stack_t* stack, int value);
-int stack_pop(stack_t* stack);
-int stack_peek(const stack_t* stack);
-int stack_dump(stack_t* stack);
-int stack_resize_decrease(stack_t* stack);
-int stack_resize_increase(stack_t* stack);
-int stack_destroy(stack_t* stack);
+//! Macros STACK_OK
+/*! macros to describe the error. */
+#define STACK_OK(stack)                                  \
+                                                         \
+    ret = stack_verify(stack);                           \
+                                                         \
+    switch (ret)                                         \
+    {                                                    \
+    case ERR_NULL_POINTER:                               \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "INVALID STRUCTURE POINTER\n", __LINE__);\
+        break;                                           \
+                                                         \
+    case ERR_STACK_ATTACKED:                             \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "STACK ATTACKED\n", __LINE__);           \
+        break;                                           \
+                                                         \
+    case ERR_STACK_OVERFLOW:                             \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "STACK OVERFLOW\n", __LINE__);           \
+        break;                                           \
+                                                         \
+    case ERR_NEGATIVE_COUNT:                             \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "NEGATIVE NUMBER OF ITEMS\n", __LINE__); \
+                                                         \
+    case ERR_INC_INPUT:                                  \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "INVALID ELEMENT\n", __LINE__);          \
+        break;                                           \
+                                                         \
+    };
 

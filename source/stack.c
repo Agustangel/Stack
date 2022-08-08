@@ -72,14 +72,14 @@ int stack_resize_increase(stack_t* stack)
         return ERR_NULL_POINTER;
     }
 
-    LOG("stack->capacity = %d\n", stack->capacity);
+    LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
     
     if(flag_multiplier_down == TWO)
     {
         flag_multiplier_upper = ONEHALF;
 
         stack->capacity = (stack->count * MULTIPLIER_2) + (sizeof(int*) / sizeof(int));
-        LOG("after stack->capacity = %d\n", stack->capacity);
+        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
 
         int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
 
@@ -89,7 +89,7 @@ int stack_resize_increase(stack_t* stack)
         }
         else
         {
-            return ERR_OUT_MEMORY;\
+            return ERR_OUT_MEMORY;
             // must not be exited
         }
     }
@@ -99,7 +99,7 @@ int stack_resize_increase(stack_t* stack)
         flag_multiplier_upper = TWO;
 
         stack->capacity = (stack->count / MULTIPLIER_1) + (sizeof(int*) / sizeof(int));
-        LOG("after stack->capacity = %d\n", stack->capacity);
+        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
 
         int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
 
@@ -109,7 +109,7 @@ int stack_resize_increase(stack_t* stack)
         }
         else
         {
-            return ERR_OUT_MEMORY;\
+            return ERR_OUT_MEMORY;
             // must not be exited
         }
     }
@@ -124,14 +124,14 @@ int stack_resize_decrease(stack_t* stack)
         return ERR_NULL_POINTER;
     }
 
-    LOG("stack->capacity = %d\n", stack->capacity);
+    LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
 
     if(flag_multiplier_upper == TWO)
     {
         flag_multiplier_down = ONEHALF;
 
         stack->capacity = (stack->count / MULTIPLIER_2) + (sizeof(int*) / sizeof(int));
-        LOG("after stack->capacity = %d\n", stack->capacity);
+        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
 
         stack->data = (int*) realloc(stack->data, stack->capacity * sizeof(int));
     }
@@ -141,7 +141,7 @@ int stack_resize_decrease(stack_t* stack)
         flag_multiplier_down = TWO;
 
         stack->capacity = (stack->count / MULTIPLIER_1) + (sizeof(int*) / sizeof(int));
-        LOG("after stack->capacity = %d\n", stack->capacity);
+        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
 
         stack->data = (int*) realloc(stack->data, stack->capacity * sizeof(int));
     }
@@ -164,19 +164,14 @@ int stack_pop(stack_t* stack)
         exit(ERR_STACK_UNDERFLOW);
     }
     --(stack->count);
-    LOG("stack->count = %d\n", stack->count);
+    //LOG("stack->count = %d\n", stack->count);
 
-    
-    int capacity = stack->capacity - sizeof(int*) / sizeof(int);
-    stack_dump(stack);
+    int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
 
-
-    if(stack->count <= capacity / 2)
+    if(stack->count <= real_capacity / 2)
     {
         stack_resize_decrease(stack);
     }
-
-    stack_dump(stack);
 
     return *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
 }
@@ -213,12 +208,9 @@ int stack_push(stack_t* stack, int value)
     //LOG("stack->count = %d\n", stack->count);
     //LOG("stack->capacity = %d\n", stack->capacity);
 
-    // capacity should not be changed during push
-    // commit more often
-    // write verifier earlier
-    int capacity = stack->capacity - sizeof(int*) / sizeof(int);
+    int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
 
-    if(stack->count >= capacity)
+    if(stack->count >= real_capacity)
     {
         stack_resize_increase(stack);
     }
@@ -228,7 +220,7 @@ int stack_push(stack_t* stack, int value)
 
     //LOG("value = %d\n", value);
     //printf("stack->data[%d] = %d\n", stack->count, *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)));
-    //stack_dump(stack);
+
     ++(stack->count);
 }
 
@@ -250,10 +242,48 @@ int stack_dump(stack_t* stack)
     printf("Elements of stack \tAddresses\n");
     for(int idx = 0; idx < stack->count; ++idx)
     {
-        printf("stack->data = %d\n", *(stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)));
         printf("stack->data[%d] = %d\t", idx,  *(stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)));
         printf("%p\n", stack->data + sizeof(canary_begin_array_) + idx * sizeof(int));
     }
+}
+
+//===================================================================
+
+int stack_verify(stack_t* stack)
+{
+    if(stack == NULL)
+    {
+        return ERR_NULL_POINTER;
+    }
+
+    if((stack->canary_1 != canary_1_) || (stack->canary_2 != canary_2_) ||           \
+       (stack->canary_3 != canary_3_) ||                                             \
+       (memcmp(stack->data, &canary_begin_array_, sizeof(canary_begin_array_)) != 0))
+    {
+        return ERR_STACK_ATTACKED;
+    }
+
+    int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
+
+    if(stack->count > real_capacity)
+    {
+        return ERR_STACK_OVERFLOW;
+    }
+
+    if((stack->count < 0) || (stack->capacity < 0))
+    {
+        return ERR_NEGATIVE_COUNT;
+    }
+
+    for(int idx = 0; idx < stack->count; ++idx)
+    {
+        if(*(stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)) == POISON)
+        {
+            return ERR_INC_INPUT;
+        }
+    }
+
+    return 0;
 }
 
 //===================================================================
