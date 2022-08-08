@@ -20,13 +20,21 @@ int main()
     HANDLE_ERROR(ret, ERR_OUT_MEMORY, "ERROR: memory failure.\n");
     HANDLE_ERROR(ret, ERR_NULL_POINTER, "ERROR: memory failure.\n");
 
+    STACK_OK(&stack);
     stack_push(&stack, 1);
+
+    STACK_OK(&stack);
     stack_push(&stack, 2);
+
+    STACK_OK(&stack);
     stack_push(&stack, 11);
+
+    STACK_OK(&stack);
     stack_push(&stack, 32);
 
+    STACK_OK(&stack);
     stack_pop(&stack);
-
+    STACK_OK(&stack);
 
     //stack_dump(&stack);
 
