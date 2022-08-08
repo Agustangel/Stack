@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <logger.h>
+#include <stdint.h>
 
 #include "stack.h"
 
@@ -15,6 +16,9 @@ static int* canary_begin_array_ = (int*) 0xBAD0BEDA;
 
 static int flag_multiplier_upper = TWO;
 static int flag_multiplier_down  = ONEHALF;
+
+static uint32_t hash = 0;
+static uint32_t previous_hash = 0;
 
 //===================================================================
 int stack_init(stack_t* stack, int init_size)
@@ -154,7 +158,7 @@ int stack_resize_decrease(stack_t* stack)
 }
 
 //===================================================================
-//to call stack_resize_decrease in stack_pop
+
 int stack_pop(stack_t* stack)
 {
     if(stack == NULL)
@@ -178,6 +182,8 @@ int stack_pop(stack_t* stack)
         stack_resize_decrease(stack);
     }
 
+    stack_hash(stack->data + sizeof(canary_begin_array_), stack->count);
+
     return *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
 }
 
@@ -196,6 +202,8 @@ int stack_peek(const stack_t* stack)
     {
         return ERR_STACK_UNDERFLOW;
     }
+    
+    stack_hash(stack->data + sizeof(canary_begin_array_), stack->count);
 
     return *(stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(int));
 }
@@ -221,11 +229,11 @@ int stack_push(stack_t* stack, int value)
 
     *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)) = value;
 
-
     //LOG("value = %d\n", value);
-    //printf("stack->data[%d] = %d\n", stack->count, *(stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)));
 
     ++(stack->count);
+
+    stack_hash(stack->data + sizeof(canary_begin_array_), stack->count);
 }
 
 //===================================================================
@@ -287,7 +295,33 @@ int stack_verify(stack_t* stack)
         }
     }
 
+    if(hash != previous_hash)
+    {
+        return ERR_DATA_ATTACKED;
+    }
+
     return 0;
+}
+
+//===================================================================
+
+void stack_hash(int *key, size_t len)
+{
+    previous_hash = hash;
+
+    uint32_t i = 0;
+
+    for(i = 0; i < len; ++i)
+    {
+        hash += key[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
 }
 
 //===================================================================

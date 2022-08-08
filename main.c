@@ -17,7 +17,7 @@ int main()
     int init_size = 5;
 
     int ret = stack_init(&stack, 5);
-
+    
     STACK_OK(&stack);
     stack_push(&stack, 1);
 
@@ -38,9 +38,10 @@ int main()
 
     STACK_OK(&stack);
     stack_pop(&stack);
-    STACK_OK(&stack);
 
-    //stack_dump(&stack);
+    STACK_OK(&stack);
+    stack_peek(&stack);
+    STACK_OK(&stack);
 
     logger_finalize(file);
 
