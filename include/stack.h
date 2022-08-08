@@ -78,17 +78,6 @@ int stack_resize_increase(stack_t* stack);
 int stack_destroy(stack_t* stack);
 int stack_verify(stack_t* stack);
 
-//! Macros HANDLE_ERROR
-/*! macros to describe the error. */
-/*! \param retval - return value to be tested.
-/*! \param errcode - const describing a possible error. 
-/*! \param msg - error message. */
-#define HANDLE_ERROR(retval, errcode, msg) \
-    if (retval == errcode)                 \
-    {                                      \
-        printf(msg);                       \
-        exit(errcode);                     \
-    };
 
 //! Macros STACK_OK
 /*! macros to describe the error. */
@@ -113,14 +102,24 @@ int stack_verify(stack_t* stack);
                 "STACK OVERFLOW\n", __LINE__);           \
         break;                                           \
                                                          \
+    case ERR_STACK_UNDERFLOW:                            \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "STACK UNDERFLOW\n", __LINE__);          \
+                                                         \
     case ERR_NEGATIVE_COUNT:                             \
         fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
                 "NEGATIVE NUMBER OF ITEMS\n", __LINE__); \
+        break;                                           \
                                                          \
     case ERR_INC_INPUT:                                  \
         fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
                 "INVALID ELEMENT\n", __LINE__);          \
         break;                                           \
+                                                         \
+    case ERR_OUT_MEMORY:                                 \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
+                "LIMITED DYNAMIC MEMORY\n", __LINE__);   \
+    break;                                               \
                                                          \
     };
 

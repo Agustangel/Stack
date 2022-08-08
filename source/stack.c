@@ -72,14 +72,16 @@ int stack_resize_increase(stack_t* stack)
         return ERR_NULL_POINTER;
     }
 
-    LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
+    int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
+    LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
     
     if(flag_multiplier_down == TWO)
     {
         flag_multiplier_upper = ONEHALF;
 
-        stack->capacity = (stack->count * MULTIPLIER_2) + (sizeof(int*) / sizeof(int));
-        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
+        real_capacity = real_capacity * MULTIPLIER_2;
+        stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
         int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
 
@@ -98,8 +100,9 @@ int stack_resize_increase(stack_t* stack)
     {
         flag_multiplier_upper = TWO;
 
-        stack->capacity = (stack->count / MULTIPLIER_1) + (sizeof(int*) / sizeof(int));
-        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
+        real_capacity = real_capacity * MULTIPLIER_1;
+        stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
         int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
 
@@ -124,14 +127,16 @@ int stack_resize_decrease(stack_t* stack)
         return ERR_NULL_POINTER;
     }
 
-    LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
+    int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
+    LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
     if(flag_multiplier_upper == TWO)
     {
         flag_multiplier_down = ONEHALF;
 
-        stack->capacity = (stack->count / MULTIPLIER_2) + (sizeof(int*) / sizeof(int));
-        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
+        real_capacity = real_capacity / MULTIPLIER_2;
+        stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
         stack->data = (int*) realloc(stack->data, stack->capacity * sizeof(int));
     }
@@ -140,8 +145,9 @@ int stack_resize_decrease(stack_t* stack)
     {
         flag_multiplier_down = TWO;
 
-        stack->capacity = (stack->count / MULTIPLIER_1) + (sizeof(int*) / sizeof(int));
-        LOG("LINE %d: stack->capacity = %d\n", __LINE__, stack->capacity);
+        real_capacity = real_capacity / MULTIPLIER_1;
+        stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
 
         stack->data = (int*) realloc(stack->data, stack->capacity * sizeof(int));
     }
@@ -160,7 +166,6 @@ int stack_pop(stack_t* stack)
 
     if(stack->count == 0)
     {
-        printf("ERROR: no more items.\n");
         exit(ERR_STACK_UNDERFLOW);
     }
     --(stack->count);
@@ -189,7 +194,6 @@ int stack_peek(const stack_t* stack)
 
     if(stack->count == 0)
     {
-        printf("ERROR: no more items.\n");
         return ERR_STACK_UNDERFLOW;
     }
 
