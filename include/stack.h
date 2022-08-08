@@ -81,45 +81,45 @@ int stack_verify(stack_t* stack);
 
 //! Macros STACK_OK
 /*! macros to describe the error. */
-#define STACK_OK(stack)                                  \
-                                                         \
-    ret = stack_verify(stack);                           \
-                                                         \
-    switch (ret)                                         \
-    {                                                    \
-    case ERR_NULL_POINTER:                               \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "INVALID STRUCTURE POINTER\n", __LINE__);\
-        break;                                           \
-                                                         \
-    case ERR_STACK_ATTACKED:                             \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "STACK ATTACKED\n", __LINE__);           \
-        break;                                           \
-                                                         \
-    case ERR_STACK_OVERFLOW:                             \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "STACK OVERFLOW\n", __LINE__);           \
-        break;                                           \
-                                                         \
-    case ERR_STACK_UNDERFLOW:                            \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "STACK UNDERFLOW\n", __LINE__);          \
-                                                         \
-    case ERR_NEGATIVE_COUNT:                             \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "NEGATIVE NUMBER OF ITEMS\n", __LINE__); \
-        break;                                           \
-                                                         \
-    case ERR_INC_INPUT:                                  \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "INVALID ELEMENT\n", __LINE__);          \
-        break;                                           \
-                                                         \
-    case ERR_OUT_MEMORY:                                 \
-        fprintf(stderr, RED "ERROR: " RESET "line %d. "  \
-                "LIMITED DYNAMIC MEMORY\n", __LINE__);   \
-    break;                                               \
-                                                         \
+#define STACK_OK(stack)                                     \
+                                                            \
+    ret = stack_verify(stack);                              \
+                                                            \
+    switch (ret)                                            \
+    {                                                       \
+    case ERR_NULL_POINTER:                                  \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "INVALID STRUCTURE POINTER\n", __LINE__);   \
+        break;                                              \
+                                                            \
+    case ERR_STACK_ATTACKED:                                \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "STACK ATTACKED\n", __LINE__);              \
+        break;                                              \
+                                                            \
+    case ERR_STACK_OVERFLOW:                                \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "STACK OVERFLOW\n", __LINE__);              \
+        break;                                              \
+                                                            \
+    case ERR_STACK_UNDERFLOW:                               \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "STACK UNDERFLOW\n", __LINE__);             \
+                                                            \
+    case ERR_NEGATIVE_COUNT:                                \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "NEGATIVE NUMBER OF ITEMS\n", __LINE__);    \
+        break;                                              \
+                                                            \
+    case ERR_INC_INPUT:                                     \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "INVALID ELEMENT\n", __LINE__);             \
+        break;                                              \
+                                                            \
+    case ERR_OUT_MEMORY:                                    \
+        fprintf(stderr, RED "ERROR: " RESET "line %d. "     \
+                "LIMITED DYNAMIC MEMORY\n", __LINE__);      \
+    break;                                                  \
+                                                            \
     };
 

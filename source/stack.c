@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <logger.h>
+#include <stdint.h>
 
 #include "stack.h"
 
@@ -288,6 +289,27 @@ int stack_verify(stack_t* stack)
     }
 
     return 0;
+}
+
+//===================================================================
+
+uint32_t stack_hash(unsigned int *key, size_t len)
+{
+    uint32_t hash = 0;
+    uint32_t i = 0;
+
+    for(i = 0; i < len; ++i)
+    {
+        hash += key[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    
+    return hash;
 }
 
 //===================================================================
