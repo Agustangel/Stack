@@ -9,10 +9,10 @@
 
 #include "stack.h"
 
-static int* canary_1_ = (int*) 0xDEADBEAF;
-static int* canary_2_ = (int*) 0xBACBEDEF;
-static int* canary_3_ = (int*) 0xAD666FED;
-static int* canary_begin_array_ = (int*) 0xBAD0BEDA;
+static unsigned long long* canary_1_ = (unsigned long long*) 0xDEADBEAF;
+static unsigned long long* canary_2_ = (unsigned long long*) 0xBACBEDEF;
+static unsigned long long* canary_3_ = (unsigned long long*) 0xAD666FED;
+static unsigned long long* canary_begin_array_ = (unsigned long long*) 0xBAD0BEDA;
 
 static int flag_multiplier_upper = TWO;
 static int flag_multiplier_down  = ONEHALF;
@@ -23,8 +23,12 @@ static uint32_t previous_hash = 0;
 //===================================================================
 int stack_init(stack_t* stack, int init_size)
 {
+    stack->error_name = 0;
+
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
@@ -35,11 +39,11 @@ int stack_init(stack_t* stack, int init_size)
     }
 
     #ifdef SAFETY
-        stack->canary_1 = (int*) 0xDEADBEAF;
-        stack->canary_2 = (int*) 0xBACBEDEF;
-        stack->canary_3 = (int*) 0xAD666FED;
+        stack->canary_1 = (unsigned long long*) 0xDEADBEAF;
+        stack->canary_2 = (unsigned long long*) 0xBACBEDEF;
+        stack->canary_3 = (unsigned long long*) 0xAD666FED;
     
-        int* canary_begin_array = (int*) 0xBAD0BEDA;
+        unsigned long long* canary_begin_array = (unsigned long long*) 0xBAD0BEDA;
     #endif
 
     #ifdef SAFETY
@@ -49,11 +53,13 @@ int stack_init(stack_t* stack, int init_size)
     #endif
 
     stack->count = 0;
-
+    
     stack->data = (int*) calloc(stack->capacity, sizeof(int));
-
+    
     if(stack->data == NULL)
     {
+        stack->error_name = ERR_OUT_MEMORY;
+
         return ERR_OUT_MEMORY;
     }
     
@@ -80,6 +86,8 @@ int stack_destroy(stack_t* stack)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
@@ -93,7 +101,9 @@ int stack_destroy(stack_t* stack)
 int stack_resize_increase(stack_t* stack)
 {
     if(stack == NULL)
-    {
+    {   
+        stack->error_name = ERR_NULL_POINTER;
+        
         return ERR_NULL_POINTER;
     }
 
@@ -127,6 +137,8 @@ int stack_resize_increase(stack_t* stack)
         }
         else
         {
+            stack->error_name = ERR_OUT_MEMORY;
+
             return ERR_OUT_MEMORY;
         }
     }
@@ -153,6 +165,8 @@ int stack_resize_increase(stack_t* stack)
         }
         else
         {
+            stack->error_name = ERR_OUT_MEMORY;
+
             return ERR_OUT_MEMORY;
         }
     }
@@ -164,6 +178,8 @@ int stack_resize_decrease(stack_t* stack)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
