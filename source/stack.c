@@ -243,6 +243,7 @@ int stack_pop(stack_t* stack)
     {
         exit(ERR_STACK_UNDERFLOW);
     }
+
     --(stack->count);
     LOG("stack->count = %d\n", stack->count);
 
@@ -261,11 +262,14 @@ int stack_pop(stack_t* stack)
 
     #ifdef SAFETY
         stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
+        previous_hash = hash;
     #endif
 
-    previous_hash = hash;
-
-    return *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
+    #ifdef SAFETY
+        return *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
+    #else
+        return *((char*) stack->data + stack->count * sizeof(int));
+    #endif
 }
 
 //===================================================================
@@ -286,11 +290,14 @@ int stack_peek(const stack_t* stack)
 
     #ifdef SAFETY
         stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
+        previous_hash = hash;
     #endif
 
-    previous_hash = hash;
-
-    return *((char*) stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(int));
+    #ifdef SAFETY
+        return *((char*) stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(int));
+    #else
+        return *((char*) stack->data + (stack->count - 1) * sizeof(int));
+    #endif
 }
 
 //===================================================================
@@ -301,9 +308,6 @@ int stack_push(stack_t* stack, int value)
     {
         return ERR_NULL_POINTER;
     }
-
-    LOG("stack->count = %d\n", stack->count);
-    LOG("stack->capacity = %d\n", stack->capacity);
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
@@ -318,9 +322,13 @@ int stack_push(stack_t* stack, int value)
         stack_resize_increase(stack);
     }
 
-    *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)) = value;
-
-    LOG("value = %d\n", value);
+    #ifdef SAFETY
+        *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int)) = value;
+        LOG("value = %d\n", value);
+    #else
+        *((char*) stack->data + stack->count * sizeof(int)) = value;
+        LOG("value = %d\n", value);
+    #endif
 
     ++(stack->count);
 
@@ -329,9 +337,8 @@ int stack_push(stack_t* stack, int value)
 
     #ifdef SAFETY
         stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
+        previous_hash = hash;
     #endif
-
-    previous_hash = hash;
 }
 
 //===================================================================
