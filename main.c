@@ -6,7 +6,8 @@
 
 #include "stack.h"
 
-
+/* TODO:
+    1) */
 int main()
 {
     logger_init(0, "stack.log");
