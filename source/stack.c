@@ -404,6 +404,8 @@ int stack_dump(stack_t* stack)
             STACK_ERROR(ERR_DATA_ATTACKED);
             STACK_ERROR(ERR_NULL_POINTER);
             STACK_ERROR(ERR_NEGATIVE_COUNT);
+            STACK_ERROR(ERR_BAD_POINTER);
+            STACK_ERROR(ERR_INC_ERRNAME);
         };
     }
     printf("\n");
@@ -455,12 +457,24 @@ int stack_dump(stack_t* stack)
 
 int stack_verify(stack_t* stack)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
+    #ifdef SAFETY
+        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL)            || \
+        (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || \
+        (&stack->error_name == NULL))
+        {
+            stack->error_name = ERR_NULL_POINTER;
 
-        return ERR_NULL_POINTER;
-    }
+            return ERR_NULL_POINTER;
+        }
+    #else
+        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL) || \
+           (&stack->error_name == NULL))
+        {
+            stack->error_name = ERR_NULL_POINTER;
+
+            return ERR_NULL_POINTER;
+        }
+    #endif
 
     #ifdef SAFETY
         if((stack->canary_1 != canary_1_) || (stack->canary_2 != canary_2_) ||         \
@@ -525,7 +539,33 @@ int stack_verify(stack_t* stack)
             return ERR_DATA_ATTACKED;
         }
     #endif
-    
+
+    #ifdef SAFETY
+        if((stack == stack->data) || (stack == &stack->count) || (stack == &stack->capacity)      || \
+        (stack == &stack->canary_1) || (stack == &stack->canary_2) || (stack == &stack->canary_3) || \
+        (stack == &stack->error_name))
+        {
+            stack->error_name = ERR_BAD_POINTER;
+
+            return ERR_BAD_POINTER;
+        }
+    #else
+        if((stack == stack->data) || (stack == &stack->count) || (stack == &stack->capacity) || \
+        (stack == &stack->error_name))
+        {
+            stack->error_name = ERR_BAD_POINTER;
+
+            return ERR_BAD_POINTER;
+        }
+    #endif
+
+    if((stack->error_name > 0) || (stack->error_name < -10))
+    {
+        stack->error_name = ERR_INC_ERRNAME;
+
+        return ERR_INC_ERRNAME;
+    }
+
     return 0;
 }
 

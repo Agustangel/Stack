@@ -1,11 +1,8 @@
-/* 1) Error code in stack
-   3) add more check in stackok
-   4) typedefs, defines, ifdef for stack multiple elems
+/* 4) typedefs, defines, ifdef for stack multiple elems
    5) operations on destructed (прекратить операции с разрушенным стеком)
    6) multiplier change (многошаговый realloc) 
 
 */
-
 
 
 /*! enumeration colors and their corresponding ANSI values. */
@@ -21,6 +18,7 @@
 
 #define MULTIPLIER_1 2
 #define MULTIPLIER_2 1.5
+#define MULTIPLIER_3 1.2
 
 #define POISON 0
 
@@ -63,14 +61,16 @@ enum flags_multiplier
 
 enum error_names
 {
+    ERR_INC_ERRNAME      = -10,
+    ERR_BAD_POINTER      = -9,
     ERR_INC_INPUT        = -8,
     ERR_OUT_MEMORY       = -7,
     ERR_STACK_UNDERFLOW  = -6,
     ERR_STACK_OVERFLOW   = -5,
     ERR_STACK_ATTACKED   = -4,
-    ERR_NULL_POINTER     = -3,
-    ERR_NEGATIVE_COUNT   = -2,
-    ERR_DATA_ATTACKED    = -1
+    ERR_DATA_ATTACKED    = -3,
+    ERR_NULL_POINTER     = -2,
+    ERR_NEGATIVE_COUNT   = -1,
 };
 
 
@@ -111,5 +111,6 @@ void stack_hash(char *key, size_t len);
         STACK_ERROR(ERR_DATA_ATTACKED);                     \
         STACK_ERROR(ERR_NULL_POINTER);                      \
         STACK_ERROR(ERR_NEGATIVE_COUNT);                    \
+        STACK_ERROR(ERR_BAD_POINTER);                       \
     };
 
