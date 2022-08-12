@@ -17,7 +17,7 @@ int main()
 
     int init_size = 5;
 
-    int ret = stack_init(&stack, init_size);
+    stack_init(&stack, init_size);
     
     stack_push(&stack, 1);
     stack_push(&stack, 2);

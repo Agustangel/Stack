@@ -1,7 +1,6 @@
-/* 4) typedefs, defines, ifdef for stack multiple elems
-   6) multiplier change (многошаговый realloc) 
-
+/* 4) typede0fs, defines, ifdef for stack multiple elems
 */
+/* 1) Multupliers enum */
 
 
 /*! enumeration colors and their corresponding ANSI values. */
@@ -27,6 +26,12 @@
 #undef SAFETY
 #endif
 
+typedef int elem_t;
+
+#ifdef DOUBLE
+    typedef double elem_t;
+#endif
+
 
 typedef struct stack_t
 {
@@ -34,7 +39,7 @@ typedef struct stack_t
         unsigned long long* canary_1;
     #endif
 
-    int* data;
+    elem_t* data;
 
     #ifdef SAFETY
         unsigned long long* canary_2;
@@ -54,9 +59,9 @@ typedef struct stack_t
 
 enum flags_multiplier
 {
-    TWO               = 0,
-    ONEHALF           = 1,
-    ANOTHER_ITERATION = 2
+    MULTIPLIER_SMALL  = 1,
+    MULTIPLIER_LARGE  = 2,
+    ANOTHER_ITERATION = 3
 };
 
 enum error_names
@@ -79,7 +84,7 @@ int stack_push(stack_t* stack, int value);
 int stack_pop(stack_t* stack);
 int stack_peek(stack_t* stack);
 int stack_dump(stack_t* stack);
-int stack_realloc_internal(stack_t* stack);
+int* stack_realloc_internal(stack_t* stack);
 int stack_resize_decrease(stack_t* stack);
 int stack_resize_increase(stack_t* stack);
 int stack_destroy(stack_t* stack);
@@ -100,9 +105,9 @@ void stack_hash(char *key, size_t len);
 /*! macros to describe the error. */
 #define STACK_OK(stack)                                     \
                                                             \
-    ret = stack_verify(stack);                              \
+    ret_ = stack_verify(stack);                             \
                                                             \
-    switch (ret)                                            \
+    switch (ret_)                                           \
     {                                                       \
         STACK_ERROR(ERR_INC_INPUT);                         \
         STACK_ERROR(ERR_OUT_MEMORY);                        \
@@ -113,5 +118,6 @@ void stack_hash(char *key, size_t len);
         STACK_ERROR(ERR_NULL_POINTER);                      \
         STACK_ERROR(ERR_NEGATIVE_COUNT);                    \
         STACK_ERROR(ERR_BAD_POINTER);                       \
+        STACK_ERROR(ERR_INC_ERRNAME);                       \
     };
 

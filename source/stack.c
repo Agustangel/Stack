@@ -14,13 +14,15 @@ static unsigned long long* canary_2_ = (unsigned long long*) 0xBACBEDEF;
 static unsigned long long* canary_3_ = (unsigned long long*) 0xAD666FED;
 static unsigned long long* canary_begin_array_ = (unsigned long long*) 0xBAD0BEDA;
 
-static int flag_multiplier_upper = TWO;
-static int flag_multiplier_down  = ONEHALF;
+static int flag_multiplier_upper = MULTIPLIER_LARGE;
+static int flag_multiplier_down  = MULTIPLIER_SMALL;
 
 static uint32_t hash = 0;
 static uint32_t previous_hash = 0;
 
 static double multiplier = 0.0;
+
+static int ret_ = 0;
 
 //===================================================================
 int stack_init(stack_t* stack, int init_size)
@@ -86,12 +88,7 @@ int stack_init(stack_t* stack, int init_size)
 
 int stack_destroy(stack_t* stack)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
 
     free(stack->data);
 
@@ -100,14 +97,9 @@ int stack_destroy(stack_t* stack)
 
 //===================================================================
 
-int stack_realloc_internal(stack_t* stack)
+int* stack_realloc_internal(stack_t* stack)
 {
-    if(stack == NULL)
-    {   
-        stack->error_name = ERR_NULL_POINTER;
-        
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
@@ -131,114 +123,105 @@ int stack_realloc_internal(stack_t* stack)
 
     if(check_ptr != NULL)
     {
-        stack->data = check_ptr;
+        STACK_OK(stack);
 
-        return 0;
+        return check_ptr;
     }
     else
-    {
-        if(multiplier != MULTIPLIER_3)
-        {
-            return ANOTHER_ITERATION;
-        }
-        else
-        {
-            stack->error_name = ERR_OUT_MEMORY;
+    {   
+        STACK_OK(stack);
 
-            return ERR_OUT_MEMORY;
-        }
+        return NULL;
     }
+
+    return NULL;
 }
 
 //===================================================================
 
 int stack_resize_increase(stack_t* stack)
 {
-    if(stack == NULL)
-    {   
-        stack->error_name = ERR_NULL_POINTER;
-        
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
     
-    if(flag_multiplier_down == TWO)
+    if(flag_multiplier_down == MULTIPLIER_LARGE)
     {
-        flag_multiplier_upper = ONEHALF;
+        flag_multiplier_upper = MULTIPLIER_SMALL;
         multiplier = MULTIPLIER_2;
 
-        int ret = stack_realloc_internal(stack);
+        int* check_ptr = stack_realloc_internal(stack);
 
-        if(ret == ANOTHER_ITERATION)
+        if(check_ptr == NULL)
         {
             multiplier = MULTIPLIER_3;
 
-            ret = stack_realloc_internal(stack);
+            check_ptr = stack_realloc_internal(stack);
 
-            if(ret == ERR_OUT_MEMORY)
+            if(check_ptr == NULL)
             {
+                STACK_OK(stack);
+
                 return ERR_OUT_MEMORY;
             }
-            else if(ret == ERR_NULL_POINTER)
+            else
             {
-                return ERR_NULL_POINTER;
+                stack->data = check_ptr;
             }
         }
-        else if(ret == ERR_NULL_POINTER)
+        else
         {
-            return ERR_NULL_POINTER;
+            stack->data = check_ptr;
         }
     }
 
-    if(flag_multiplier_down == ONEHALF)
+    if(flag_multiplier_down == MULTIPLIER_SMALL)
     {
-        flag_multiplier_upper = TWO;
+        flag_multiplier_upper = MULTIPLIER_LARGE;
         multiplier = MULTIPLIER_1;
 
-        int ret = stack_realloc_internal(stack);
+        int* check_ptr = stack_realloc_internal(stack);
 
-        if(ret == ANOTHER_ITERATION)
+        if(check_ptr == NULL)
         {
             multiplier = MULTIPLIER_2;
 
-            ret = stack_realloc_internal(stack);
+            check_ptr = stack_realloc_internal(stack);
 
-            if(ret == ANOTHER_ITERATION)
+            if(check_ptr == NULL)
             {
                 multiplier = MULTIPLIER_3;
 
-                ret = stack_realloc_internal(stack);
+                check_ptr = stack_realloc_internal(stack);
 
-                if(ret == ERR_OUT_MEMORY)
+                if(check_ptr == NULL)
                 {
+                    STACK_OK(stack);
+
                     return ERR_OUT_MEMORY;
                 }
-                else if(ret == ERR_NULL_POINTER)
+                else
                 {
-                    return ERR_NULL_POINTER;
+                    stack->data = check_ptr;
                 }
             }
-            else if(ret == ERR_NULL_POINTER)
+            else
             {
-                return ERR_NULL_POINTER;
+                stack->data = check_ptr;
             }
         }
-        else if(ret == ERR_NULL_POINTER)
+        else
         {
-            return ERR_NULL_POINTER;
+            stack->data = check_ptr;
         }
     }
+
+    STACK_OK(stack);
 }
 
 //===================================================================
 
 int stack_resize_decrease(stack_t* stack)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
@@ -248,9 +231,9 @@ int stack_resize_decrease(stack_t* stack)
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
     #endif
 
-    if(flag_multiplier_upper == TWO)
+    if(flag_multiplier_upper == MULTIPLIER_LARGE)
     {
-        flag_multiplier_down = ONEHALF;
+        flag_multiplier_down = MULTIPLIER_SMALL;
 
         real_capacity = real_capacity / MULTIPLIER_2;
 
@@ -276,9 +259,9 @@ int stack_resize_decrease(stack_t* stack)
         }
     }
 
-    if(flag_multiplier_upper == ONEHALF)
+    if(flag_multiplier_upper == MULTIPLIER_SMALL)
     {
-        flag_multiplier_down = TWO;
+        flag_multiplier_down = MULTIPLIER_LARGE;
 
         real_capacity = real_capacity / MULTIPLIER_1;
 
@@ -303,18 +286,15 @@ int stack_resize_decrease(stack_t* stack)
             return ERR_OUT_MEMORY;
         }
     }
+
+    STACK_OK(stack);
 }
 
 //===================================================================
 
 int stack_pop(stack_t* stack)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
 
     LOG("stack->count = %d\n", stack->count);
 
@@ -347,8 +327,10 @@ int stack_pop(stack_t* stack)
     #endif
 
     #ifdef SAFETY
+        STACK_OK(stack);
         return *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(int));
     #else
+        STACK_OK(stack);
         return *((char*) stack->data + stack->count * sizeof(int));
     #endif
 }
@@ -357,12 +339,7 @@ int stack_pop(stack_t* stack)
 
 int stack_peek(stack_t* stack)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
 
     LOG("stack->count = %d\n", stack->count);
 
@@ -379,8 +356,10 @@ int stack_peek(stack_t* stack)
     #endif
 
     #ifdef SAFETY
+        STACK_OK(stack);
         return *((char*) stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(int));
     #else
+        STACK_OK(stack);
         return *((char*) stack->data + (stack->count - 1) * sizeof(int));
     #endif
 }
@@ -389,12 +368,7 @@ int stack_peek(stack_t* stack)
 
 int stack_push(stack_t* stack, int value)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
@@ -426,18 +400,15 @@ int stack_push(stack_t* stack, int value)
         stack_hash((char*) stack->data + sizeof(canary_begin_array_), stack->count);
         previous_hash = hash;
     #endif
+
+    STACK_OK(stack);
 }
 
 //===================================================================
 
 int stack_dump(stack_t* stack)
 {
-    if(stack == NULL)
-    {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
-    }
+    STACK_OK(stack);
     
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
@@ -514,10 +485,12 @@ int stack_dump(stack_t* stack)
 
 int stack_verify(stack_t* stack)
 {
+    STACK_OK(stack);
+
     #ifdef SAFETY
-        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL)            || \
-        (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || \
-        (&stack->error_name == NULL))
+        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL)               || \
+           (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || \
+           (&stack->error_name == NULL))
         {
             stack->error_name = ERR_NULL_POINTER;
 
@@ -534,9 +507,9 @@ int stack_verify(stack_t* stack)
     #endif
 
     #ifdef SAFETY
-        if((stack->canary_1 != canary_1_) || (stack->canary_2 != canary_2_) ||         \
-        (stack->canary_3 != canary_3_) ||                                              \
-        (memcmp(stack->data, &canary_begin_array_, sizeof(canary_begin_array_)) != 0))
+        if((stack->canary_1 != canary_1_) || (stack->canary_2 != canary_2_) ||            \
+           (stack->canary_3 != canary_3_) ||                                              \
+           (memcmp(stack->data, &canary_begin_array_, sizeof(canary_begin_array_)) != 0))
         {
             stack->error_name = ERR_STACK_ATTACKED;
 
@@ -598,9 +571,9 @@ int stack_verify(stack_t* stack)
     #endif
 
     #ifdef SAFETY
-        if((stack == (stack_t*) stack->data) || (stack == (stack_t*) &stack->count) || (stack == (stack_t*) &stack->capacity)      || \
-        (stack == (stack_t*) &stack->canary_1) || (stack == (stack_t*) &stack->canary_2) || (stack == (stack_t*) &stack->canary_3) || \
-        (stack == (stack_t*) &stack->error_name))
+        if((stack == (stack_t*) stack->data) || (stack == (stack_t*) &stack->count) || (stack == (stack_t*) &stack->capacity)         || \
+           (stack == (stack_t*) &stack->canary_1) || (stack == (stack_t*) &stack->canary_2) || (stack == (stack_t*) &stack->canary_3) || \
+           (stack == (stack_t*) &stack->error_name))
         {
             stack->error_name = ERR_BAD_POINTER;
 
@@ -608,7 +581,7 @@ int stack_verify(stack_t* stack)
         }
     #else
         if((stack == stack->data) || (stack == &stack->count) || (stack == &stack->capacity) || \
-        (stack == &stack->error_name))
+           (stack == &stack->error_name))
         {
             stack->error_name = ERR_BAD_POINTER;
 
@@ -622,6 +595,8 @@ int stack_verify(stack_t* stack)
 
         return ERR_INC_ERRNAME;
     }
+
+    STACK_OK(stack);
 
     return 0;
 }
