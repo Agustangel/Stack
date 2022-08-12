@@ -1,5 +1,4 @@
 /* 4) typedefs, defines, ifdef for stack multiple elems
-   5) operations on destructed (прекратить операции с разрушенным стеком)
    6) multiplier change (многошаговый realloc) 
 
 */
@@ -85,6 +84,46 @@ int stack_destroy(stack_t* stack);
 int stack_verify(stack_t* stack);
 void stack_hash(char *key, size_t len);
 
+
+#define STACK_REALLOC(MULTIPLIER)                                               \
+{                                                                               \
+    real_capacity = real_capacity * MULTIPLIER;                                 \
+                                                                                \
+    #ifdef SAFETY                                                               \
+        stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));         \
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);          \
+    #else                                                                       \
+        stack->capacity = real_capacity;                                        \
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);          \
+    #endif                                                                      \
+                                                                                \
+    check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));   \
+                                                                                \
+    if(check_ptr != NULL)                                                       \
+    {                                                                           \
+        stack->data = check_ptr;                                                \
+    }                                                                           \
+    else                                                                        \
+    {                                                                           \
+        if (MULTIPLIER != MULTIPLIER_3)                                         \
+        {                                                                       \
+            if(MULTIPLIER == MULTIPLIER_1)                                      \
+            {                                                                   \
+                STACK_REALLOC(MULTIPLIE_2)                                      \
+            }                                                                   \
+            else                                                                \
+            {                                                                   \
+                STACK_REALLOC(MULTIPLIE_3)                                      \
+            }                                                                   \
+        }                                                                       \
+        else                                                                    \
+        {                                                                       \
+            stack->error_name = ERR_OUT_MEMORY;                                 \
+                                                                                \
+            return ERR_OUT_MEMORY;                                              \
+        }                                                                       \
+    }                                                                           \
+};
 
 //! Macros STACK_ERROR
 /*! macros to print the error. */

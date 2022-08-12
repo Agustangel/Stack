@@ -137,9 +137,28 @@ int stack_resize_increase(stack_t* stack)
         }
         else
         {
-            stack->error_name = ERR_OUT_MEMORY;
+            real_capacity = real_capacity * MULTIPLIER_3;
 
-            return ERR_OUT_MEMORY;
+            #ifdef SAFETY
+                stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+            #else
+                stack->capacity = real_capacity;
+                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+            #endif
+
+            check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
+
+            if(check_ptr != NULL)
+            {
+                stack->data = check_ptr;
+            }
+            else
+            {
+                stack->error_name = ERR_OUT_MEMORY;
+
+                return ERR_OUT_MEMORY;
+            }
         }
     }
 
@@ -165,9 +184,47 @@ int stack_resize_increase(stack_t* stack)
         }
         else
         {
-            stack->error_name = ERR_OUT_MEMORY;
+            real_capacity = real_capacity * MULTIPLIER_2;
 
-            return ERR_OUT_MEMORY;
+            #ifdef SAFETY
+                stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+            #else
+                stack->capacity = real_capacity;
+                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+            #endif
+
+            check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
+
+            if(check_ptr != NULL)
+            {
+                stack->data = check_ptr;
+            }
+            else
+            {
+                real_capacity = real_capacity * MULTIPLIER_3;
+
+                #ifdef SAFETY
+                    stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+                    LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+                #else
+                    stack->capacity = real_capacity;
+                    LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+                #endif
+
+                check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
+
+                if(check_ptr != NULL)
+                {
+                    stack->data = check_ptr;
+                }
+                else
+                {
+                    stack->error_name = ERR_OUT_MEMORY;
+
+                    return ERR_OUT_MEMORY;
+                }
+            }
         }
     }
 }
