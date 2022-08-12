@@ -20,6 +20,8 @@ static int flag_multiplier_down  = ONEHALF;
 static uint32_t hash = 0;
 static uint32_t previous_hash = 0;
 
+static double multiplier = 0.0;
+
 //===================================================================
 int stack_init(stack_t* stack, int init_size)
 {
@@ -98,7 +100,7 @@ int stack_destroy(stack_t* stack)
 
 //===================================================================
 
-int stack_resize_increase(stack_t* stack)
+int stack_realloc_internal(stack_t* stack)
 {
     if(stack == NULL)
     {   
@@ -114,117 +116,115 @@ int stack_resize_increase(stack_t* stack)
         int real_capacity = stack->capacity;
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
     #endif
+
+    real_capacity = real_capacity * multiplier;
+
+    #ifdef SAFETY
+        stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+    #else
+        stack->capacity = real_capacity;
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+    #endif
+
+    int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
+
+    if(check_ptr != NULL)
+    {
+        stack->data = check_ptr;
+
+        return 0;
+    }
+    else
+    {
+        if(multiplier != MULTIPLIER_3)
+        {
+            return ANOTHER_ITERATION;
+        }
+        else
+        {
+            stack->error_name = ERR_OUT_MEMORY;
+
+            return ERR_OUT_MEMORY;
+        }
+    }
+}
+
+//===================================================================
+
+int stack_resize_increase(stack_t* stack)
+{
+    if(stack == NULL)
+    {   
+        stack->error_name = ERR_NULL_POINTER;
+        
+        return ERR_NULL_POINTER;
+    }
     
     if(flag_multiplier_down == TWO)
     {
         flag_multiplier_upper = ONEHALF;
+        multiplier = MULTIPLIER_2;
 
-        real_capacity = real_capacity * MULTIPLIER_2;
+        int ret = stack_realloc_internal(stack);
 
-        #ifdef SAFETY
-            stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
-        #else
-            stack->capacity = real_capacity;
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
-        #endif
-
-        int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
-
-        if(check_ptr != NULL)
+        if(ret == ANOTHER_ITERATION)
         {
-            stack->data = check_ptr;
-        }
-        else
-        {
-            real_capacity = real_capacity * MULTIPLIER_3;
+            multiplier = MULTIPLIER_3;
 
-            #ifdef SAFETY
-                stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
-                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
-            #else
-                stack->capacity = real_capacity;
-                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
-            #endif
+            ret = stack_realloc_internal(stack);
 
-            check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
-
-            if(check_ptr != NULL)
+            if(ret == ERR_OUT_MEMORY)
             {
-                stack->data = check_ptr;
-            }
-            else
-            {
-                stack->error_name = ERR_OUT_MEMORY;
-
                 return ERR_OUT_MEMORY;
             }
+            else if(ret == ERR_NULL_POINTER)
+            {
+                return ERR_NULL_POINTER;
+            }
+        }
+        else if(ret == ERR_NULL_POINTER)
+        {
+            return ERR_NULL_POINTER;
         }
     }
 
     if(flag_multiplier_down == ONEHALF)
     {
         flag_multiplier_upper = TWO;
+        multiplier = MULTIPLIER_1;
 
-        real_capacity = real_capacity * MULTIPLIER_1;
+        int ret = stack_realloc_internal(stack);
 
-        #ifdef SAFETY
-            stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
-        #else
-            stack->capacity = real_capacity;
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
-        #endif
-
-        int* check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
-
-        if(check_ptr != NULL)
+        if(ret == ANOTHER_ITERATION)
         {
-            stack->data = check_ptr;
-        }
-        else
-        {
-            real_capacity = real_capacity * MULTIPLIER_2;
+            multiplier = MULTIPLIER_2;
 
-            #ifdef SAFETY
-                stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
-                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
-            #else
-                stack->capacity = real_capacity;
-                LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
-            #endif
+            ret = stack_realloc_internal(stack);
 
-            check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
-
-            if(check_ptr != NULL)
+            if(ret == ANOTHER_ITERATION)
             {
-                stack->data = check_ptr;
-            }
-            else
-            {
-                real_capacity = real_capacity * MULTIPLIER_3;
+                multiplier = MULTIPLIER_3;
 
-                #ifdef SAFETY
-                    stack->capacity = real_capacity + (sizeof(int*) / sizeof(int));
-                    LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
-                #else
-                    stack->capacity = real_capacity;
-                    LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
-                #endif
+                ret = stack_realloc_internal(stack);
 
-                check_ptr = (int*) realloc(stack->data, (stack->capacity) * sizeof(int));
-
-                if(check_ptr != NULL)
+                if(ret == ERR_OUT_MEMORY)
                 {
-                    stack->data = check_ptr;
-                }
-                else
-                {
-                    stack->error_name = ERR_OUT_MEMORY;
-
                     return ERR_OUT_MEMORY;
                 }
+                else if(ret == ERR_NULL_POINTER)
+                {
+                    return ERR_NULL_POINTER;
+                }
             }
+            else if(ret == ERR_NULL_POINTER)
+            {
+                return ERR_NULL_POINTER;
+            }
+        }
+        else if(ret == ERR_NULL_POINTER)
+        {
+            return ERR_NULL_POINTER;
         }
     }
 }
@@ -598,9 +598,9 @@ int stack_verify(stack_t* stack)
     #endif
 
     #ifdef SAFETY
-        if((stack == stack->data) || (stack == &stack->count) || (stack == &stack->capacity)      || \
-        (stack == &stack->canary_1) || (stack == &stack->canary_2) || (stack == &stack->canary_3) || \
-        (stack == &stack->error_name))
+        if((stack == (stack_t*) stack->data) || (stack == (stack_t*) &stack->count) || (stack == (stack_t*) &stack->capacity)      || \
+        (stack == (stack_t*) &stack->canary_1) || (stack == (stack_t*) &stack->canary_2) || (stack == (stack_t*) &stack->canary_3) || \
+        (stack == (stack_t*) &stack->error_name))
         {
             stack->error_name = ERR_BAD_POINTER;
 
