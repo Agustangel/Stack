@@ -213,6 +213,8 @@ int stack_resize_decrease(stack_t* stack)
         }
         else
         {
+            stack->error_name = ERR_OUT_MEMORY;
+
             return ERR_OUT_MEMORY;
         }
     }
@@ -239,6 +241,8 @@ int stack_resize_decrease(stack_t* stack)
         }
         else
         {
+            stack->error_name = ERR_OUT_MEMORY;
+
             return ERR_OUT_MEMORY;
         }
     }
@@ -250,6 +254,8 @@ int stack_pop(stack_t* stack)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
@@ -257,7 +263,9 @@ int stack_pop(stack_t* stack)
 
     if(stack->count == 0)
     {
-        exit(ERR_STACK_UNDERFLOW);
+        stack->error_name = ERR_STACK_UNDERFLOW;
+
+        return ERR_STACK_UNDERFLOW;
     }
 
     --(stack->count);
@@ -290,10 +298,12 @@ int stack_pop(stack_t* stack)
 
 //===================================================================
 
-int stack_peek(const stack_t* stack)
+int stack_peek(stack_t* stack)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
@@ -301,6 +311,8 @@ int stack_peek(const stack_t* stack)
 
     if(stack->count == 0)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_STACK_UNDERFLOW;
     }
 
@@ -322,6 +334,8 @@ int stack_push(stack_t* stack, int value)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
@@ -363,6 +377,8 @@ int stack_dump(stack_t* stack)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
     
@@ -375,6 +391,22 @@ int stack_dump(stack_t* stack)
     #endif
 
     printf("-----------------------------------------------------------\n");
+
+    if(stack->error_name != 0)
+    {
+        switch (stack->error_name)
+        {
+            STACK_ERROR(ERR_INC_INPUT);
+            STACK_ERROR(ERR_OUT_MEMORY)
+            STACK_ERROR(ERR_STACK_UNDERFLOW);
+            STACK_ERROR(ERR_STACK_OVERFLOW);
+            STACK_ERROR(ERR_STACK_ATTACKED);
+            STACK_ERROR(ERR_DATA_ATTACKED);
+            STACK_ERROR(ERR_NULL_POINTER);
+            STACK_ERROR(ERR_NEGATIVE_COUNT);
+        };
+    }
+    printf("\n");
 
     #ifdef SAFETY
         printf("\t\t       Canaries and hash \n");
@@ -425,6 +457,8 @@ int stack_verify(stack_t* stack)
 {
     if(stack == NULL)
     {
+        stack->error_name = ERR_NULL_POINTER;
+
         return ERR_NULL_POINTER;
     }
 
@@ -433,6 +467,8 @@ int stack_verify(stack_t* stack)
         (stack->canary_3 != canary_3_) ||                                              \
         (memcmp(stack->data, &canary_begin_array_, sizeof(canary_begin_array_)) != 0))
         {
+            stack->error_name = ERR_STACK_ATTACKED;
+
             return ERR_STACK_ATTACKED;
         }
     #endif
@@ -447,11 +483,15 @@ int stack_verify(stack_t* stack)
 
     if(stack->count > real_capacity)
     {
+        stack->error_name = ERR_STACK_OVERFLOW;
+
         return ERR_STACK_OVERFLOW;
     }
 
     if((stack->count < 0) || (stack->capacity < 0))
     {
+        stack->error_name = ERR_NEGATIVE_COUNT;
+
         return ERR_NEGATIVE_COUNT;
     }
 
@@ -460,6 +500,8 @@ int stack_verify(stack_t* stack)
         {
             if(*((char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(int)) == POISON)
             {
+                stack->error_name = ERR_INC_INPUT;
+
                 return ERR_INC_INPUT;
             }
         }
@@ -468,6 +510,8 @@ int stack_verify(stack_t* stack)
         {
             if(*((char*) stack->data + idx * sizeof(int)) == POISON)
             {
+                stack->error_name = ERR_INC_INPUT;
+
                 return ERR_INC_INPUT;
             }
         }
@@ -476,6 +520,8 @@ int stack_verify(stack_t* stack)
     #ifdef SAFETY
         if(hash != previous_hash)
         {
+            stack->error_name = ERR_DATA_ATTACKED;
+
             return ERR_DATA_ATTACKED;
         }
     #endif

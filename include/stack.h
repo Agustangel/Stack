@@ -77,7 +77,7 @@ enum error_names
 int stack_init(stack_t* stack, int init_size);
 int stack_push(stack_t* stack, int value);
 int stack_pop(stack_t* stack);
-int stack_peek(const stack_t* stack);
+int stack_peek(stack_t* stack);
 int stack_dump(stack_t* stack);
 int stack_resize_decrease(stack_t* stack);
 int stack_resize_increase(stack_t* stack);

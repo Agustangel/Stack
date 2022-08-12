@@ -19,22 +19,19 @@ int main()
 
     int ret = stack_init(&stack, init_size);
     
-    STACK_OK(&stack);
     stack_push(&stack, 1);
-
-    STACK_OK(&stack);
     stack_push(&stack, 2);
-
-    STACK_OK(&stack);
     stack_push(&stack, 11);
-
-    STACK_OK(&stack);
     stack_push(&stack, 32);
-
-    STACK_OK(&stack);
     stack_peek(&stack);
-    STACK_OK(&stack);
 
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    
     stack_dump(&stack);
 
     stack_destroy(&stack);
