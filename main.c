@@ -15,24 +15,25 @@ int main()
 
     stack_t stack;
 
-    int init_size = 5;
+    int init_size = 2;
 
     stack_init(&stack, init_size);
-    
+
     stack_push(&stack, 1);
+    stack_dump(&stack);
     stack_push(&stack, 2);
     stack_push(&stack, 11);
     stack_push(&stack, 32);
     stack_peek(&stack);
 
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    
     stack_dump(&stack);
+    
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
 
     stack_destroy(&stack);
 

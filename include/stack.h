@@ -26,10 +26,15 @@
 #undef SAFETY
 #endif
 
+
 typedef int elem_t;
 
 #ifdef DOUBLE
     typedef double elem_t;
+#endif
+
+#ifdef CHAR
+    typedef char elem_t;
 #endif
 
 
@@ -60,8 +65,7 @@ typedef struct stack_t
 enum flags_multiplier
 {
     MULTIPLIER_SMALL  = 1,
-    MULTIPLIER_LARGE  = 2,
-    ANOTHER_ITERATION = 3
+    MULTIPLIER_LARGE  = 2
 };
 
 enum error_names
@@ -84,7 +88,7 @@ int stack_push(stack_t* stack, int value);
 int stack_pop(stack_t* stack);
 int stack_peek(stack_t* stack);
 int stack_dump(stack_t* stack);
-int* stack_realloc_internal(stack_t* stack);
+elem_t* stack_realloc_internal(stack_t* stack);
 int stack_resize_decrease(stack_t* stack);
 int stack_resize_increase(stack_t* stack);
 int stack_destroy(stack_t* stack);
@@ -103,21 +107,21 @@ void stack_hash(char *key, size_t len);
 
 //! Macros STACK_OK
 /*! macros to describe the error. */
-#define STACK_OK(stack)                                     \
-                                                            \
-    ret_ = stack_verify(stack);                             \
-                                                            \
-    switch (ret_)                                           \
-    {                                                       \
-        STACK_ERROR(ERR_INC_INPUT);                         \
-        STACK_ERROR(ERR_OUT_MEMORY);                        \
-        STACK_ERROR(ERR_STACK_UNDERFLOW);                   \
-        STACK_ERROR(ERR_STACK_OVERFLOW);                    \
-        STACK_ERROR(ERR_STACK_ATTACKED);                    \
-        STACK_ERROR(ERR_DATA_ATTACKED);                     \
-        STACK_ERROR(ERR_NULL_POINTER);                      \
-        STACK_ERROR(ERR_NEGATIVE_COUNT);                    \
-        STACK_ERROR(ERR_BAD_POINTER);                       \
-        STACK_ERROR(ERR_INC_ERRNAME);                       \
+#define STACK_OK(stack)                                                             \
+                                                                                    \
+    ret_ = stack_verify(stack);                                                     \
+                                                                                    \
+    switch (ret_)                                                                   \
+    {                                                                               \
+        STACK_ERROR(ERR_INC_INPUT);                                                 \
+        STACK_ERROR(ERR_OUT_MEMORY);                                                \
+        STACK_ERROR(ERR_STACK_UNDERFLOW);                                           \
+        STACK_ERROR(ERR_STACK_OVERFLOW);                                            \
+        STACK_ERROR(ERR_STACK_ATTACKED);                                            \
+        STACK_ERROR(ERR_DATA_ATTACKED);                                             \
+        STACK_ERROR(ERR_NULL_POINTER);                                              \
+        STACK_ERROR(ERR_NEGATIVE_COUNT);                                            \
+        STACK_ERROR(ERR_BAD_POINTER);                                               \
+        STACK_ERROR(ERR_INC_ERRNAME);                                               \
     };
 
