@@ -1,7 +1,3 @@
-/* 4) typede0fs, defines, ifdef for stack multiple elems
-*/
-/* 1) Multupliers enum */
-
 
 /*! enumeration colors and their corresponding ANSI values. */
 #define BLACK "\033[0;30m"

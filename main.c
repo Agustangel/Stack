@@ -6,8 +6,7 @@
 
 #include "stack.h"
 
-/* TODO:
-    1) */
+
 int main()
 {
     logger_init(0, "stack.log");
@@ -28,12 +27,12 @@ int main()
 
     stack_dump(&stack);
     
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
-    // stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
 
     stack_destroy(&stack);
 
