@@ -51,7 +51,7 @@ int stack_init(stack_t* stack, int init_size)
     #endif
 
     #ifdef SAFETY
-        stack->capacity = init_size + sizeof(canary_begin_array) / sizeof(elem_t);
+        stack->capacity = init_size + sizeof(canary_begin_array_) / sizeof(elem_t);
     #else
         stack->capacity = init_size;
     #endif
@@ -68,7 +68,7 @@ int stack_init(stack_t* stack, int init_size)
     }
     
     #ifdef SAFETY
-        memcpy(stack->data, &canary_begin_array, sizeof(canary_begin_array));
+        memcpy(stack->data, &canary_begin_array_, sizeof(canary_begin_array_));
 
         for(int idx = 0; idx < init_size; ++idx)
         {
@@ -116,25 +116,24 @@ elem_t* stack_realloc_internal(stack_t* stack)
     #ifdef SAFETY
         stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        elem_t* check_ptr = (elem_t*) realloc(stack->data, sizeof(canary_begin_array_) + real_capacity * sizeof(elem_t));
     #else
         stack->capacity = real_capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        elem_t* check_ptr = (elem_t*) realloc(stack->data, real_capacity * sizeof(elem_t));         
     #endif
 
-    elem_t* check_ptr = (elem_t*) realloc(stack->data, (stack->capacity) * sizeof(elem_t));
+    //elem_t* check_ptr = (elem_t*) realloc(stack->data, (stack->capacity) * sizeof(elem_t));
 
     if(check_ptr != NULL)
     {
+        stack->data = check_ptr;
         STACK_OK(stack);
 
         return check_ptr;
     }
-    else
-    {   
-        STACK_OK(stack);
 
-        return NULL;
-    }
+    STACK_OK(stack);
 
     return NULL;
 }
@@ -151,23 +150,18 @@ int stack_resize_increase(stack_t* stack)
         multiplier = MULTIPLIER_2;
 
         elem_t* check_ptr = stack_realloc_internal(stack);
-
         if(check_ptr == NULL)
         {
             multiplier = MULTIPLIER_3;
 
             check_ptr = stack_realloc_internal(stack);
-
             if(check_ptr == NULL)
             {
                 STACK_OK(stack);
 
                 return ERR_OUT_MEMORY;
             }
-            else
-            {
-                stack->data = check_ptr;
-            }
+            stack->data = check_ptr;
         }
         else
         {
@@ -181,39 +175,30 @@ int stack_resize_increase(stack_t* stack)
         multiplier = MULTIPLIER_1;
 
         elem_t* check_ptr = stack_realloc_internal(stack);
-
         if(check_ptr == NULL)
         {
             multiplier = MULTIPLIER_2;
 
             check_ptr = stack_realloc_internal(stack);
-
             if(check_ptr == NULL)
             {
                 multiplier = MULTIPLIER_3;
 
                 check_ptr = stack_realloc_internal(stack);
-
                 if(check_ptr == NULL)
                 {
                     STACK_OK(stack);
 
                     return ERR_OUT_MEMORY;
                 }
-                else
-                {
-                    stack->data = check_ptr;
-                }
+                stack->data = check_ptr;
             }
             else
             {
                 stack->data = check_ptr;
             }
         }
-        else
-        {
-            stack->data = check_ptr;
-        }
+        stack->data = check_ptr;
     }
 
     STACK_OK(stack);
@@ -249,16 +234,13 @@ int stack_resize_decrease(stack_t* stack)
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
         
-        if(check_ptr != NULL)
-        {
-            stack->data = check_ptr;
-        }
-        else
+        if(check_ptr == NULL)
         {
             stack->error_name = ERR_OUT_MEMORY;
 
-            return ERR_OUT_MEMORY;
+            return ERR_OUT_MEMORY;            
         }
+        stack->data = check_ptr;
     }
 
     if(flag_multiplier_upper == MULTIPLIER_SMALL)
@@ -277,16 +259,13 @@ int stack_resize_decrease(stack_t* stack)
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
         
-        if(check_ptr != NULL)
-        {
-            stack->data = check_ptr;
-        }
-        else
+        if(check_ptr == NULL)
         {
             stack->error_name = ERR_OUT_MEMORY;
 
-            return ERR_OUT_MEMORY;
+            return ERR_OUT_MEMORY;            
         }
+        stack->data = check_ptr;
     }
 
     STACK_OK(stack);
@@ -385,11 +364,9 @@ int stack_push(stack_t* stack, elem_t value)
         stack_resize_increase(stack);
     }
 
-    elem_t* skip_canary_data = NULL;
+    elem_t* skip_canary_data = stack->data;
     #ifdef SAFETY
-    {
         skip_canary_data = (elem_t*) ((char*) stack->data + sizeof(canary_begin_array_));
-    }
     #endif
 
     #ifdef DOUBLE
@@ -502,8 +479,8 @@ int stack_dump(stack_t* stack)
 int stack_verify(stack_t* stack)
 {
     #ifdef SAFETY
-        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL)               || \
-           (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || \
+        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL) || 
+           (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || 
            (&stack->error_name == NULL))
         {
             stack->error_name = ERR_NULL_POINTER;
@@ -511,7 +488,7 @@ int stack_verify(stack_t* stack)
             return ERR_NULL_POINTER;
         }
     #else
-        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL) || \
+        if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL) || 
            (&stack->error_name == NULL))
         {
             stack->error_name = ERR_NULL_POINTER;
@@ -521,13 +498,8 @@ int stack_verify(stack_t* stack)
     #endif
 
     #ifdef SAFETY
-        // printf("canary_1_ = %p; stack->canary_1 = %p\n", canary_1_, stack->canary_1);
-        // printf("canary_2_ = %p; stack->canary_2 = %p\n", canary_2_, stack->canary_2);
-        // printf("canary_3_ = %p; stack->canary_3 = %p\n", canary_3_, stack->canary_3);
-        // printf("canary_begin_array_ = %p; stack->canary_begin_array_ = %d\n", canary_begin_array_, *stack->data);
-
-        if((stack->canary_1 != canary_1_) || (stack->canary_2 != canary_2_) ||            \
-           (stack->canary_3 != canary_3_) ||                                              \
+        if((stack->canary_1 != canary_1_) || (stack->canary_2 != canary_2_) ||            
+           (stack->canary_3 != canary_3_) ||                                            
            (memcmp(stack->data, &canary_begin_array_, sizeof(canary_begin_array_)) != 0))
         {
             stack->error_name = ERR_STACK_ATTACKED;
@@ -539,6 +511,7 @@ int stack_verify(stack_t* stack)
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("LINE %d: stack->count = %d\n", __LINE__, stack->count);
     #else
         int real_capacity = stack->capacity;
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
@@ -634,5 +607,4 @@ void stack_hash(char *key, size_t len)
     hash += (hash << 3);
     hash ^= (hash >> 11);
     hash += (hash << 15);
-
 }
