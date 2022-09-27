@@ -1,9 +1,9 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 #include <logger.h>
 #include <stdint.h>
 
@@ -31,9 +31,8 @@ int stack_init(stack_t* stack, int init_size)
 
     if(stack == NULL)
     {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_NULL_POINTER;
+        fprintf(stderr, RED "ERROR: " RESET "INVALID POINTER TO STACK.\n");
+        exit(ERR_NULL_POINTER);
     }
 
     if(init_size <= 0)
@@ -57,14 +56,11 @@ int stack_init(stack_t* stack, int init_size)
     #endif
 
     stack->count = 0;
-    
+
     stack->data = (elem_t*) calloc(stack->capacity, sizeof(elem_t));
-    
     if(stack->data == NULL)
     {
-        stack->error_name = ERR_OUT_MEMORY;
-
-        return ERR_OUT_MEMORY;
+        stack->error_name |= 1 << ERR_OUT_MEMORY;
     }
     
     #ifdef SAFETY
@@ -122,8 +118,6 @@ elem_t* stack_realloc_internal(stack_t* stack)
         LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
         elem_t* check_ptr = (elem_t*) realloc(stack->data, real_capacity * sizeof(elem_t));         
     #endif
-
-    //elem_t* check_ptr = (elem_t*) realloc(stack->data, (stack->capacity) * sizeof(elem_t));
 
     if(check_ptr != NULL)
     {
@@ -189,7 +183,7 @@ int stack_resize_increase(stack_t* stack)
                 {
                     STACK_OK(stack);
 
-                    return ERR_OUT_MEMORY;
+                    stack->error_name |= 1 << ERR_OUT_MEMORY;
                 }
                 stack->data = check_ptr;
             }
@@ -233,12 +227,9 @@ int stack_resize_decrease(stack_t* stack)
         #endif
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
-        
         if(check_ptr == NULL)
         {
-            stack->error_name = ERR_OUT_MEMORY;
-
-            return ERR_OUT_MEMORY;            
+            stack->error_name |= 1 << ERR_OUT_MEMORY;           
         }
         stack->data = check_ptr;
     }
@@ -261,9 +252,7 @@ int stack_resize_decrease(stack_t* stack)
         
         if(check_ptr == NULL)
         {
-            stack->error_name = ERR_OUT_MEMORY;
-
-            return ERR_OUT_MEMORY;            
+            stack->error_name |= 1 << ERR_OUT_MEMORY;           
         }
         stack->data = check_ptr;
     }
@@ -281,9 +270,7 @@ int stack_pop(stack_t* stack)
 
     if(stack->count == 0)
     {
-        stack->error_name = ERR_STACK_UNDERFLOW;
-
-        return ERR_STACK_UNDERFLOW;
+        stack->error_name |= 1 << ERR_STACK_UNDERFLOW;
     }
 
     --(stack->count);
@@ -326,9 +313,7 @@ int stack_peek(stack_t* stack)
 
     if(stack->count == 0)
     {
-        stack->error_name = ERR_NULL_POINTER;
-
-        return ERR_STACK_UNDERFLOW;
+        stack->error_name |= 1 << ERR_NULL_POINTER;
     }
 
     #ifdef SAFETY
@@ -411,6 +396,7 @@ int stack_dump(stack_t* stack)
 
     if(stack->error_name != 0)
     {
+    // TODO сделать проверку ошибок
         switch (stack->error_name)
         {
             STACK_ERROR(ERR_INC_INPUT);

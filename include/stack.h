@@ -66,16 +66,16 @@ enum flags_multiplier
 
 enum error_names
 {
-    ERR_INC_ERRNAME      = -10,
-    ERR_BAD_POINTER      = -9,
-    ERR_INC_INPUT        = -8,
-    ERR_OUT_MEMORY       = -7,
-    ERR_STACK_UNDERFLOW  = -6,
-    ERR_STACK_OVERFLOW   = -5,
-    ERR_STACK_ATTACKED   = -4,
-    ERR_DATA_ATTACKED    = -3,
-    ERR_NULL_POINTER     = -2,
-    ERR_NEGATIVE_COUNT   = -1,
+    ERR_INC_ERRNAME      = 10,
+    ERR_BAD_POINTER      = 9,
+    ERR_INC_INPUT        = 8,
+    ERR_OUT_MEMORY       = 7,
+    ERR_STACK_UNDERFLOW  = 6,
+    ERR_STACK_OVERFLOW   = 5,
+    ERR_STACK_ATTACKED   = 4,
+    ERR_DATA_ATTACKED    = 3,
+    ERR_NULL_POINTER     = 2,
+    ERR_NEGATIVE_COUNT   = 1,
 };
 
 

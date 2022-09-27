@@ -9,7 +9,7 @@
 
 int main()
 {
-    logger_init(0, "stack.log");
+    logger_init(1, "stack.log");
     logger_set_level(INFO);
 
     stack_t stack;
