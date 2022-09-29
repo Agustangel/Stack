@@ -61,6 +61,7 @@ int stack_init(stack_t* stack, int init_size)
     if(stack->data == NULL)
     {
         stack->error_name |= 1 << ERR_OUT_MEMORY;
+        return ERR_OUT_MEMORY;
     }
     
     #ifdef SAFETY
@@ -153,6 +154,7 @@ int stack_resize_increase(stack_t* stack)
             {
                 STACK_OK(stack);
 
+                stack->error_name |= 1 << ERR_OUT_MEMORY;
                 return ERR_OUT_MEMORY;
             }
             stack->data = check_ptr;
@@ -184,6 +186,7 @@ int stack_resize_increase(stack_t* stack)
                     STACK_OK(stack);
 
                     stack->error_name |= 1 << ERR_OUT_MEMORY;
+                    return ERR_OUT_MEMORY;
                 }
                 stack->data = check_ptr;
             }
@@ -229,7 +232,8 @@ int stack_resize_decrease(stack_t* stack)
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
         if(check_ptr == NULL)
         {
-            stack->error_name |= 1 << ERR_OUT_MEMORY;           
+            stack->error_name |= 1 << ERR_OUT_MEMORY;
+            return ERR_OUT_MEMORY;       
         }
         stack->data = check_ptr;
     }
@@ -252,7 +256,8 @@ int stack_resize_decrease(stack_t* stack)
         
         if(check_ptr == NULL)
         {
-            stack->error_name |= 1 << ERR_OUT_MEMORY;           
+            stack->error_name |= 1 << ERR_OUT_MEMORY;
+            return ERR_OUT_MEMORY;           
         }
         stack->data = check_ptr;
     }
@@ -271,6 +276,7 @@ int stack_pop(stack_t* stack)
     if(stack->count == 0)
     {
         stack->error_name |= 1 << ERR_STACK_UNDERFLOW;
+        return ERR_STACK_UNDERFLOW;
     }
 
     --(stack->count);
@@ -314,6 +320,7 @@ int stack_peek(stack_t* stack)
     if(stack->count == 0)
     {
         stack->error_name |= 1 << ERR_NULL_POINTER;
+        return ERR_NULL_POINTER;
     }
 
     #ifdef SAFETY
@@ -396,20 +403,56 @@ int stack_dump(stack_t* stack)
 
     if(stack->error_name != 0)
     {
-    // TODO сделать проверку ошибок
-        switch (stack->error_name)
+        int error_tmp = 0;
+        int error_number = 10;
+        for(int error_idx = 1; error_idx < error_number; ++error_idx)
         {
-            STACK_ERROR(ERR_INC_INPUT);
-            STACK_ERROR(ERR_OUT_MEMORY)
-            STACK_ERROR(ERR_STACK_UNDERFLOW);
-            STACK_ERROR(ERR_STACK_OVERFLOW);
-            STACK_ERROR(ERR_STACK_ATTACKED);
-            STACK_ERROR(ERR_DATA_ATTACKED);
-            STACK_ERROR(ERR_NULL_POINTER);
-            STACK_ERROR(ERR_NEGATIVE_COUNT);
-            STACK_ERROR(ERR_BAD_POINTER);
-            STACK_ERROR(ERR_INC_ERRNAME);
-        };
+            error_tmp = stack->error_name;
+            error_tmp &= 1 << error_idx;
+    
+            switch (error_tmp)
+            {
+            case (1 << ERR_INC_INPUT):
+                STACK_ERROR(ERR_INC_INPUT);
+                break;
+
+            case (1 << ERR_OUT_MEMORY):
+                STACK_ERROR(ERR_OUT_MEMORY);
+                break;
+
+            case (1 << ERR_STACK_UNDERFLOW):
+                STACK_ERROR(ERR_STACK_UNDERFLOW);
+                break;
+
+            case (1 << ERR_STACK_OVERFLOW):
+                STACK_ERROR(ERR_STACK_OVERFLOW);
+                break;
+
+            case (1 << ERR_STACK_ATTACKED):
+                STACK_ERROR(ERR_STACK_ATTACKED);
+                break;
+
+            case (1 << ERR_DATA_ATTACKED):
+                STACK_ERROR(ERR_DATA_ATTACKED);
+                break;
+
+            case (1 << ERR_NULL_POINTER):
+                STACK_ERROR(ERR_NULL_POINTER);
+                break;
+
+            case (1 << ERR_NEGATIVE_COUNT):
+                STACK_ERROR(ERR_NEGATIVE_COUNT);
+                break;
+
+            case (1 << ERR_BAD_POINTER):
+                STACK_ERROR(ERR_BAD_POINTER);
+                break;
+                
+            case (1 << ERR_INC_ERRNAME):
+                STACK_ERROR(ERR_INC_ERRNAME);
+                break;
+            };
+        }
     }
     printf("\n");
 
@@ -469,17 +512,13 @@ int stack_verify(stack_t* stack)
            (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || 
            (&stack->error_name == NULL))
         {
-            stack->error_name = ERR_NULL_POINTER;
-
-            return ERR_NULL_POINTER;
+            stack->error_name |= 1 << ERR_NULL_POINTER;
         }
     #else
         if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL) || 
            (&stack->error_name == NULL))
         {
-            stack->error_name = ERR_NULL_POINTER;
-
-            return ERR_NULL_POINTER;
+            stack->error_name |= 1 << ERR_NULL_POINTER;
         }
     #endif
 
@@ -488,9 +527,7 @@ int stack_verify(stack_t* stack)
            (stack->canary_3 != canary_3_) ||                                            
            (memcmp(stack->data, &canary_begin_array_, sizeof(canary_begin_array_)) != 0))
         {
-            stack->error_name = ERR_STACK_ATTACKED;
-
-            return ERR_STACK_ATTACKED;
+            stack->error_name |= 1 << ERR_STACK_ATTACKED;
         }
     #endif
 
@@ -505,16 +542,12 @@ int stack_verify(stack_t* stack)
 
     if(stack->count > real_capacity)
     {
-        stack->error_name = ERR_STACK_OVERFLOW;
-
-        return ERR_STACK_OVERFLOW;
+        stack->error_name |= 1 << ERR_STACK_OVERFLOW;
     }
 
     if((stack->count < 0) || (stack->capacity < 0))
     {
-        stack->error_name = ERR_NEGATIVE_COUNT;
-
-        return ERR_NEGATIVE_COUNT;
+        stack->error_name |= 1 << ERR_NEGATIVE_COUNT;
     }
 
     #ifdef SAFETY
@@ -522,9 +555,7 @@ int stack_verify(stack_t* stack)
         {
             if(*((char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(elem_t)) == POISON)
             {
-                stack->error_name = ERR_INC_INPUT;
-
-                return ERR_INC_INPUT;
+                stack->error_name |= 1 << ERR_INC_INPUT;
             }
         }
     #else
@@ -532,9 +563,7 @@ int stack_verify(stack_t* stack)
         {
             if(*((char*) stack->data + idx * sizeof(elem_t)) == POISON)
             {
-                stack->error_name = ERR_INC_INPUT;
-
-                return ERR_INC_INPUT;
+                stack->error_name |= 1 << ERR_INC_INPUT;
             }
         }
     #endif
@@ -542,9 +571,7 @@ int stack_verify(stack_t* stack)
     #ifdef SAFETY
         if(hash != previous_hash)
         {
-            stack->error_name = ERR_DATA_ATTACKED;
-
-            return ERR_DATA_ATTACKED;
+            stack->error_name |= 1 << ERR_DATA_ATTACKED;
         }
     #endif
 
@@ -553,25 +580,19 @@ int stack_verify(stack_t* stack)
         if((stack == (stack_t*) stack->data) || (stack == (stack_t*) &stack->count) || (stack == (stack_t*) &stack->capacity) ||         \
            (stack == (stack_t*) &stack->canary_2) || (stack == (stack_t*) &stack->canary_3) || (stack == (stack_t*) &stack->error_name))
         {
-            stack->error_name = ERR_BAD_POINTER;
-
-            return ERR_BAD_POINTER;
+            stack->error_name |= 1 << ERR_BAD_POINTER;
         }
     #else
         if((stack == (stack_t*) stack->data) || (stack == (stack_t*) &stack->count) || (stack == (stack_t*) &stack->capacity) || \
            (stack == (stack_t*) &stack->error_name))
         {
-            stack->error_name = ERR_BAD_POINTER;
-
-            return ERR_BAD_POINTER;
+            stack->error_name |= 1 << ERR_BAD_POINTER;
         }
     #endif
 
     if((stack->error_name > 0) || (stack->error_name < -10))
     {
-        stack->error_name = ERR_INC_ERRNAME;
-
-        return ERR_INC_ERRNAME;
+        stack->error_name |= 1 << ERR_INC_ERRNAME;
     }
 
     return 0;

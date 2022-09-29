@@ -96,9 +96,7 @@ void stack_hash(char *key, size_t len);
 /*! macros to print the error. */
 #define STACK_ERROR(ERROR_NAME)                                                     \
 {                                                                                   \
-   case ERROR_NAME:                                                                 \
-       fprintf(stderr, RED "ERROR:" RESET "line %d. " #ERROR_NAME "\n", __LINE__);  \
-       break;                                                                       \
+    fprintf(stderr, RED "ERROR:" RESET "line %d. " #ERROR_NAME "\n", __LINE__);     \
 };
 
 //! Macros STACK_OK
@@ -109,15 +107,43 @@ void stack_hash(char *key, size_t len);
                                                                                     \
     switch (ret_)                                                                   \
     {                                                                               \
+    case (1 << ERR_INC_INPUT):                                                      \
         STACK_ERROR(ERR_INC_INPUT);                                                 \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_OUT_MEMORY):                                                     \
         STACK_ERROR(ERR_OUT_MEMORY);                                                \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_STACK_UNDERFLOW):                                                \
         STACK_ERROR(ERR_STACK_UNDERFLOW);                                           \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_STACK_OVERFLOW):                                                 \
         STACK_ERROR(ERR_STACK_OVERFLOW);                                            \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_STACK_ATTACKED):                                                 \
         STACK_ERROR(ERR_STACK_ATTACKED);                                            \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_DATA_ATTACKED):                                                  \
         STACK_ERROR(ERR_DATA_ATTACKED);                                             \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_NULL_POINTER):                                                   \
         STACK_ERROR(ERR_NULL_POINTER);                                              \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_NEGATIVE_COUNT):                                                 \
         STACK_ERROR(ERR_NEGATIVE_COUNT);                                            \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_BAD_POINTER):                                                    \
         STACK_ERROR(ERR_BAD_POINTER);                                               \
+        break;                                                                      \
+                                                                                    \
+    case (1 << ERR_INC_ERRNAME):                                                    \
         STACK_ERROR(ERR_INC_ERRNAME);                                               \
-    };
-
+        break;                                                                      \
+    };                                                          

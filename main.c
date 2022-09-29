@@ -20,15 +20,14 @@ int main()
 
     stack_push(&stack, 1);
     stack_push(&stack, 2);
-    stack_push(&stack, 11);
+    // stack_push(&stack, 11);
     // stack_push(&stack, 32);
-
-    // stack_dump(&stack);
     
-    // stack_pop(&stack);
-    // stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
+    stack_pop(&stack);
 
-
+    stack_dump(&stack);
     stack_destroy(&stack);
 
     logger_finalize(file);
