@@ -1,4 +1,6 @@
 
+#include <stdint.h>
+
 /*! enumeration colors and their corresponding ANSI values. */
 #define BLACK "\033[0;30m"
 #define BLUE "\033[0;34m"
@@ -14,7 +16,7 @@
 #define MULTIPLIER_2 1.5
 #define MULTIPLIER_3 1.2
 
-#define POISON 0
+#define POISON 7
 
 #define SAFETY 1
 
@@ -89,7 +91,7 @@ int stack_resize_decrease(stack_t* stack);
 int stack_resize_increase(stack_t* stack);
 int stack_destroy(stack_t* stack);
 int stack_verify(stack_t* stack);
-void stack_hash(char *key, size_t len);
+uint32_t hash_FAQ6(const void* key, size_t len);
 
 
 //! Macros STACK_ERROR
