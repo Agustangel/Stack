@@ -1,7 +1,4 @@
 
-// #TODO переписать stack_resize_increase, убрав отступы
-//       возможность, обернуть контрукцию обновления хэш-значений в макрос
- 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,11 +57,10 @@ int stack_init(stack_t* stack, int init_size)
         stack->error_name |= 1 << ERR_OUT_MEMORY;
 
         #ifdef SAFETY
-            hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-            hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-            previous_hash_stack = hash_stack;
-            previous_hash_data  = hash_data;
+            update_hash(stack);
         #endif
+
+        STACK_OK(stack);
 
         return ERR_OUT_MEMORY;
     }
@@ -89,11 +85,10 @@ int stack_init(stack_t* stack, int init_size)
         stack->canary_3 = canary_3_;
         unsigned long long* canary_begin_array = canary_begin_array_;
 
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));       
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
+
+    LOG("LINE %d: FUNCTION %s: stack->capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->capacity);
 
     STACK_OK(stack);
 
@@ -113,27 +108,37 @@ int stack_destroy(stack_t* stack)
 
 //===================================================================
 
+void update_hash(stack_t* stack)
+{
+    hash_stack = hash_FAQ6(stack, sizeof(stack_t));
+    hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
+    previous_hash_stack = hash_stack;
+    previous_hash_data  = hash_data;
+}
+
+//===================================================================
+
 elem_t* stack_realloc_internal(stack_t* stack)
 {
     STACK_OK(stack);
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #else
         int real_capacity = stack->capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #endif
 
     real_capacity = real_capacity * multiplier;
 
     #ifdef SAFETY
         stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
         elem_t* check_ptr = (elem_t*) realloc(stack->data, sizeof(canary_begin_array_) + real_capacity * sizeof(elem_t));
     #else
         stack->capacity = real_capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
         elem_t* check_ptr = (elem_t*) realloc(stack->data, real_capacity * sizeof(elem_t));         
     #endif
 
@@ -142,22 +147,14 @@ elem_t* stack_realloc_internal(stack_t* stack)
         stack->data = check_ptr;
 
         #ifdef SAFETY
-            hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-            hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-            previous_hash_stack = hash_stack;
-            previous_hash_data  = hash_data;
+            update_hash(stack);
         #endif
-
-        STACK_OK(stack);
 
         return check_ptr;
     }
 
     #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
 
     STACK_OK(stack);
@@ -177,30 +174,44 @@ int stack_resize_increase(stack_t* stack)
         multiplier = MULTIPLIER_2;
 
         elem_t* check_ptr = stack_realloc_internal(stack);
-        if(check_ptr == NULL)
-        {
-            multiplier = MULTIPLIER_3;
-
-            check_ptr = stack_realloc_internal(stack);
-            if(check_ptr == NULL)
-            {
-                stack->error_name |= 1 << ERR_OUT_MEMORY;
-
-                #ifdef SAFETY
-                    hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-                    hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-                    previous_hash_stack = hash_stack;
-                    previous_hash_data  = hash_data;
-                #endif
-
-                return ERR_OUT_MEMORY;
-            }
-            stack->data = check_ptr;
-        }
-        else
+        if(check_ptr != NULL)
         {
             stack->data = check_ptr;
+
+            #ifdef SAFETY
+                update_hash(stack);
+            #endif
+
+            STACK_OK(stack);
+
+            return 0;
         }
+
+        multiplier = MULTIPLIER_3;
+        
+        check_ptr = stack_realloc_internal(stack);
+        if(check_ptr != NULL)
+        {
+            stack->data = check_ptr;
+
+            #ifdef SAFETY
+                update_hash(stack);
+            #endif
+
+            STACK_OK(stack);
+
+            return 0;
+        }
+
+        stack->error_name |= 1 << ERR_OUT_MEMORY;
+            
+        #ifdef SAFETY
+            update_hash(stack);
+        #endif
+
+        STACK_OK(stack);
+
+        return ERR_OUT_MEMORY;         
     }
 
     if(flag_multiplier_down == MULTIPLIER_SMALL)
@@ -209,47 +220,61 @@ int stack_resize_increase(stack_t* stack)
         multiplier = MULTIPLIER_1;
 
         elem_t* check_ptr = stack_realloc_internal(stack);
-        if(check_ptr == NULL)
+        if(check_ptr != NULL)
         {
-            multiplier = MULTIPLIER_2;
+            stack->data = check_ptr;
 
-            check_ptr = stack_realloc_internal(stack);
-            if(check_ptr == NULL)
-            {
-                multiplier = MULTIPLIER_3;
+            #ifdef SAFETY
+                update_hash(stack);
+            #endif
 
-                check_ptr = stack_realloc_internal(stack);
-                if(check_ptr == NULL)
-                {
-                    stack->error_name |= 1 << ERR_OUT_MEMORY;
+            STACK_OK(stack);
 
-                    #ifdef SAFETY
-                        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-                        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-                        previous_hash_stack = hash_stack;
-                        previous_hash_data  = hash_data;
-                    #endif
-
-                    return ERR_OUT_MEMORY;
-                }
-                stack->data = check_ptr;
-            }
-            else
-            {
-                stack->data = check_ptr;
-            }
+            return 0;            
         }
-        stack->data = check_ptr;
+
+        multiplier = MULTIPLIER_2;
+
+        check_ptr = stack_realloc_internal(stack);
+        if(check_ptr != NULL)
+        {
+            stack->data = check_ptr;
+
+            #ifdef SAFETY
+                update_hash(stack);
+            #endif
+
+            STACK_OK(stack);
+
+            return 0;  
+        }
+
+        multiplier = MULTIPLIER_3;
+
+        check_ptr = stack_realloc_internal(stack);
+        if(check_ptr != NULL)
+        {
+            stack->data = check_ptr;
+
+            #ifdef SAFETY
+                update_hash(stack);
+            #endif
+
+            STACK_OK(stack);
+
+            return 0; 
+        }
+
+        stack->error_name |= 1 << ERR_OUT_MEMORY;
+
+        #ifdef SAFETY
+            update_hash(stack);
+        #endif
+
+        STACK_OK(stack);
+
+        return ERR_OUT_MEMORY;
     }
-
-    #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
-    #endif
-
-    STACK_OK(stack);
 }
 
 //===================================================================
@@ -260,10 +285,10 @@ int stack_resize_decrease(stack_t* stack)
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #else
         int real_capacity = stack->capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #endif
 
     if(flag_multiplier_upper == MULTIPLIER_LARGE)
@@ -274,27 +299,35 @@ int stack_resize_decrease(stack_t* stack)
 
         #ifdef SAFETY
             stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
         #else
             stack->capacity = real_capacity;
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);            
         #endif
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
-        if(check_ptr == NULL)
+        if(check_ptr != NULL)
         {
-            stack->error_name |= 1 << ERR_OUT_MEMORY;
+            stack->data = check_ptr;
 
             #ifdef SAFETY
-                hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-                hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-                previous_hash_stack = hash_stack;
-                previous_hash_data  = hash_data;
-            #endif  
+                update_hash(stack);
+            #endif
 
-            return ERR_OUT_MEMORY;       
+            STACK_OK(stack);
+
+            return 0; 
         }
-        stack->data = check_ptr;
+
+        stack->error_name |= 1 << ERR_OUT_MEMORY;
+
+        #ifdef SAFETY
+            update_hash(stack);
+        #endif  
+
+        STACK_OK(stack);
+
+        return ERR_OUT_MEMORY;  
     }
 
     if(flag_multiplier_upper == MULTIPLIER_SMALL)
@@ -305,38 +338,38 @@ int stack_resize_decrease(stack_t* stack)
 
         #ifdef SAFETY
             stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
         #else
             stack->capacity = real_capacity;
-            LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);            
+            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);            
         #endif
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
-        
-        if(check_ptr == NULL)
+        if(check_ptr != NULL)
         {
-            stack->error_name |= 1 << ERR_OUT_MEMORY;
+            stack->data = check_ptr;
 
             #ifdef SAFETY
-                hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-                hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-                previous_hash_stack = hash_stack;
-                previous_hash_data  = hash_data;
+                update_hash(stack);
             #endif
 
-            return ERR_OUT_MEMORY;           
+            STACK_OK(stack);
+
+            return 0; 
         }
-        stack->data = check_ptr;
+
+        stack->error_name |= 1 << ERR_OUT_MEMORY;
+
+        #ifdef SAFETY
+            update_hash(stack);
+        #endif  
+
+        STACK_OK(stack);
+
+        return ERR_OUT_MEMORY; 
     }
 
-    #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
-    #endif
-
-    STACK_OK(stack);
+    return 0; 
 }
 
 //===================================================================
@@ -345,38 +378,32 @@ int stack_pop(stack_t* stack)
 {
     STACK_OK(stack);
 
-    LOG("IN POP stack->count = %d\n", stack->count);
+    LOG("In LINE %d, FUNCTION %s: stack->count = %d\n",  __LINE__, __PRETTY_FUNCTION__, stack->count);
 
     if(stack->count == 0)
     {
         stack->error_name |= 1 << ERR_STACK_UNDERFLOW;
 
         #ifdef SAFETY
-            hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-            hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-            previous_hash_stack = hash_stack;
-            previous_hash_data  = hash_data;
+            update_hash(stack);
         #endif
 
         return ERR_STACK_UNDERFLOW;
     }
 
     --(stack->count);
-    LOG("stack->count = %d\n", stack->count);
+    LOG("In LINE %d, FUNCTION %s: stack->count = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->count);
 
     #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #else
         int real_capacity = stack->capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #endif
 
     if(stack->count <= real_capacity / 2)
@@ -385,10 +412,7 @@ int stack_pop(stack_t* stack)
     }
 
     #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
 
     #ifdef SAFETY
@@ -406,19 +430,23 @@ int stack_peek(stack_t* stack)
 {
     STACK_OK(stack);
 
-    LOG("stack->count = %d\n", stack->count);
+    LOG("In LINE %d, FUNCTION %s: stack->count = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->count);
 
     if(stack->count == 0)
     {
         stack->error_name |= 1 << ERR_NULL_POINTER;
+
+        #ifdef SAFETY
+            update_hash(stack);
+        #endif
+
+        STACK_OK(stack);
+
         return ERR_NULL_POINTER;
     }
 
     #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
 
     #ifdef SAFETY
@@ -438,10 +466,10 @@ int stack_push(stack_t* stack, elem_t value)
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #else
         int real_capacity = stack->capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #endif
 
     if(stack->count >= real_capacity)
@@ -456,25 +484,22 @@ int stack_push(stack_t* stack, elem_t value)
 
     #ifdef DOUBLE
         *((char*) skip_canary_data + stack->count * sizeof(elem_t)) = value;
-        LOG("value = %lf\n", value);
+        LOG("In LINE %d, FUNCTION %s: value = %lf\n", __LINE__, __PRETTY_FUNCTION__, value);
     #elif CHAR
         *((char*) skip_canary_data + stack->count * sizeof(elem_t)) = value;
-        LOG("value = %c\n", value);
+        LOG("In LINE %d, FUNCTION %s: value = %c\n", __LINE__, __PRETTY_FUNCTION__, value);
     #else
         *((char*) skip_canary_data + stack->count * sizeof(elem_t)) = value;
-        LOG("value = %d\n", value);
+        LOG("In LINE %d, FUNCTION %s: value = %d\n", __LINE__, __PRETTY_FUNCTION__, value);
     #endif
 
     ++(stack->count);
 
-    LOG("stack->count = %d\n", stack->count);
-    LOG("real_capacity = %d\n", real_capacity);
+    LOG("In LINE %d, FUNCTION %s: stack->count = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->count);
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
     #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
 
     STACK_OK(stack);
@@ -488,10 +513,10 @@ int stack_dump(stack_t* stack)
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #else
         int real_capacity = stack->capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #endif
 
     printf("-----------------------------------------------------------\n");
@@ -599,10 +624,7 @@ int stack_dump(stack_t* stack)
     printf("-----------------------------------------------------------\n");
 
     #ifdef SAFETY
-        hash_stack = hash_FAQ6(stack, sizeof(stack_t));
-        hash_data  = hash_FAQ6(stack->data, sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-        previous_hash_stack = hash_stack;
-        previous_hash_data  = hash_data;
+        update_hash(stack);
     #endif
 
     STACK_OK(stack);
@@ -638,11 +660,11 @@ int stack_verify(stack_t* stack)
 
     #ifdef SAFETY
         int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
-        LOG("LINE %d: stack->count = %d\n", __LINE__, stack->count);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: stack->count = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->count);
     #else
         int real_capacity = stack->capacity;
-        LOG("LINE %d: real_capacity = %d\n", __LINE__, real_capacity);
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
     #endif
 
     if(stack->count > real_capacity)

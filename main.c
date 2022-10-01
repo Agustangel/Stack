@@ -14,16 +14,14 @@ int main()
 
     stack_t stack;
 
-    int init_size = 2;
+    int init_size = 4;
 
     stack_init(&stack, init_size);
 
     stack_push(&stack, 1);
     stack_push(&stack, 2);
-    // stack_push(&stack, 11);
-    // stack_push(&stack, 32);
-    
-    stack_pop(&stack);
+    stack_push(&stack, 11);
+
     stack_pop(&stack);
     stack_pop(&stack);
 

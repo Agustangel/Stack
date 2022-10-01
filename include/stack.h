@@ -92,6 +92,8 @@ int stack_resize_increase(stack_t* stack);
 int stack_destroy(stack_t* stack);
 int stack_verify(stack_t* stack);
 uint32_t hash_FAQ6(const void* key, size_t len);
+void update_hash(stack_t* stack);
+
 
 
 //! Macros STACK_ERROR
