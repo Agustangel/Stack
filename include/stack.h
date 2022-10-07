@@ -66,18 +66,18 @@ enum flags_multiplier
     MULTIPLIER_LARGE  = 2
 };
 
-enum error_names
+enum stk_error_names
 {
-    ERR_INC_ERRNAME      = 10,
-    ERR_BAD_POINTER      = 9,
-    ERR_INC_INPUT        = 8,
-    ERR_OUT_MEMORY       = 7,
-    ERR_STACK_UNDERFLOW  = 6,
-    ERR_STACK_OVERFLOW   = 5,
-    ERR_STACK_ATTACKED   = 4,
-    ERR_DATA_ATTACKED    = 3,
-    ERR_NULL_POINTER     = 2,
-    ERR_NEGATIVE_COUNT   = 1,
+    ERR_STK_INC_ERRNAME      = 10,
+    ERR_STK_BAD_POINTER      = 9,
+    ERR_STK_INC_INPUT        = 8,
+    ERR_STK_OUT_MEMORY       = 7,
+    ERR_STK_STACK_UNDERFLOW  = 6,
+    ERR_STK_STACK_OVERFLOW   = 5,
+    ERR_STK_STACK_ATTACKED   = 4,
+    ERR_STK_DATA_ATTACKED    = 3,
+    ERR_STK_NULL_POINTER     = 2,
+    ERR_STK_NEGATIVE_COUNT   = 1,
 };
 
 
@@ -111,43 +111,43 @@ void update_hash(stack_t* stack);
                                                                                     \
     switch (ret_)                                                                   \
     {                                                                               \
-    case (1 << ERR_INC_INPUT):                                                      \
-        STACK_ERROR(ERR_INC_INPUT);                                                 \
+    case (1 << ERR_STK_INC_INPUT):                                                  \
+        STACK_ERROR(ERR_STK_INC_INPUT);                                             \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_OUT_MEMORY):                                                     \
-        STACK_ERROR(ERR_OUT_MEMORY);                                                \
+    case (1 << ERR_STK_OUT_MEMORY):                                                 \
+        STACK_ERROR(ERR_STK_OUT_MEMORY);                                            \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_STACK_UNDERFLOW):                                                \
-        STACK_ERROR(ERR_STACK_UNDERFLOW);                                           \
+    case (1 << ERR_STK_STACK_UNDERFLOW):                                            \
+        STACK_ERROR(ERR_STK_STACK_UNDERFLOW);                                       \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_STACK_OVERFLOW):                                                 \
-        STACK_ERROR(ERR_STACK_OVERFLOW);                                            \
+    case (1 << ERR_STK_STACK_OVERFLOW):                                             \
+        STACK_ERROR(ERR_STK_STACK_OVERFLOW);                                        \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_STACK_ATTACKED):                                                 \
-        STACK_ERROR(ERR_STACK_ATTACKED);                                            \
+    case (1 << ERR_STK_STACK_ATTACKED):                                             \
+        STACK_ERROR(ERR_STK_STACK_ATTACKED);                                        \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_DATA_ATTACKED):                                                  \
-        STACK_ERROR(ERR_DATA_ATTACKED);                                             \
+    case (1 << ERR_STK_DATA_ATTACKED):                                              \
+        STACK_ERROR(ERR_STK_DATA_ATTACKED);                                         \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_NULL_POINTER):                                                   \
-        STACK_ERROR(ERR_NULL_POINTER);                                              \
+    case (1 << ERR_STK_NULL_POINTER):                                               \
+        STACK_ERROR(ERR_STK_NULL_POINTER);                                          \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_NEGATIVE_COUNT):                                                 \
-        STACK_ERROR(ERR_NEGATIVE_COUNT);                                            \
+    case (1 << ERR_STK_NEGATIVE_COUNT):                                             \
+        STACK_ERROR(ERR_STK_NEGATIVE_COUNT);                                        \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_BAD_POINTER):                                                    \
-        STACK_ERROR(ERR_BAD_POINTER);                                               \
+    case (1 << ERR_STK_BAD_POINTER):                                                \
+        STACK_ERROR(ERR_STK_BAD_POINTER);                                           \
         break;                                                                      \
                                                                                     \
-    case (1 << ERR_INC_ERRNAME):                                                    \
-        STACK_ERROR(ERR_INC_ERRNAME);                                               \
+    case (1 << ERR_STK_INC_ERRNAME):                                                \
+        STACK_ERROR(ERR_STK_INC_ERRNAME);                                           \
         break;                                                                      \
     };                                                          
