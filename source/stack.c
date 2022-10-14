@@ -123,22 +123,22 @@ elem_t* stack_realloc_internal(stack_t* stack)
     STACK_OK(stack);
 
     #ifdef SAFETY
-        int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) a
     #else
-        int real_capacity = stack->capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) b
     #endif
+    
+    int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
+    int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
     real_capacity = real_capacity * multiplier;
+    stack->capacity = real_capacity + delta;
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
     #ifdef SAFETY
-        stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
         elem_t* check_ptr = (elem_t*) realloc(stack->data, sizeof(canary_begin_array_) + real_capacity * sizeof(elem_t));
     #else
-        stack->capacity = real_capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
         elem_t* check_ptr = (elem_t*) realloc(stack->data, real_capacity * sizeof(elem_t));         
     #endif
 
@@ -167,7 +167,7 @@ elem_t* stack_realloc_internal(stack_t* stack)
 int stack_resize_increase(stack_t* stack)
 {
     STACK_OK(stack);
-    
+
     if(flag_multiplier_down == MULTIPLIER_LARGE)
     {
         flag_multiplier_upper = MULTIPLIER_SMALL;
@@ -284,26 +284,22 @@ int stack_resize_decrease(stack_t* stack)
     STACK_OK(stack);
 
     #ifdef SAFETY
-        int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) a
     #else
-        int real_capacity = stack->capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) b
     #endif
 
+    int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
+    int real_capacity = stack->capacity - delta;
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+    
     if(flag_multiplier_upper == MULTIPLIER_LARGE)
     {
         flag_multiplier_down = MULTIPLIER_SMALL;
 
         real_capacity = real_capacity / MULTIPLIER_2;
-
-        #ifdef SAFETY
-            stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
-            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-        #else
-            stack->capacity = real_capacity;
-            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);            
-        #endif
+        stack->capacity = real_capacity + delta;
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
         if(check_ptr != NULL)
@@ -335,14 +331,8 @@ int stack_resize_decrease(stack_t* stack)
         flag_multiplier_down = MULTIPLIER_LARGE;
 
         real_capacity = real_capacity / MULTIPLIER_1;
-
-        #ifdef SAFETY
-            stack->capacity = real_capacity + sizeof(canary_begin_array_) / sizeof(elem_t);
-            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-        #else
-            stack->capacity = real_capacity;
-            LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);            
-        #endif
+        stack->capacity = real_capacity + delta;
+        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
         elem_t* check_ptr = (elem_t*) realloc(stack->data, stack->capacity * sizeof(elem_t));
         if(check_ptr != NULL)
@@ -377,6 +367,12 @@ int stack_resize_decrease(stack_t* stack)
 int stack_pop(stack_t* stack)
 {
     STACK_OK(stack);
+    
+    #ifdef SAFETY
+        #define TERNARY_PICK(a, b) a
+    #else
+        #define TERNARY_PICK(a, b) b
+    #endif
 
     LOG("In LINE %d, FUNCTION %s: stack->count = %d\n",  __LINE__, __PRETTY_FUNCTION__, stack->count);
 
@@ -398,13 +394,9 @@ int stack_pop(stack_t* stack)
         update_hash(stack);
     #endif
 
-    #ifdef SAFETY
-        int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-    #else
-        int real_capacity = stack->capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-    #endif
+    int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
+    int real_capacity = stack->capacity - delta;
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
     if(stack->count <= real_capacity / 2)
     {
@@ -415,13 +407,11 @@ int stack_pop(stack_t* stack)
         update_hash(stack);
     #endif
 
-    #ifdef SAFETY
-        STACK_OK(stack);
-        return *((char*) stack->data + sizeof(canary_begin_array_) + stack->count * sizeof(elem_t));
-    #else
-        STACK_OK(stack);
-        return *((char*) stack->data + stack->count * sizeof(elem_t));
-    #endif
+    elem_t* data_ptr = (elem_t*) TERNARY_PICK((char*) stack->data + sizeof(canary_begin_array_), (char*) stack->data);
+
+    STACK_OK(stack);
+    
+    return *(data_ptr + stack->count * sizeof(elem_t));
 }
 
 //===================================================================
@@ -429,6 +419,12 @@ int stack_pop(stack_t* stack)
 int stack_peek(stack_t* stack)
 {
     STACK_OK(stack);
+
+    #ifdef SAFETY
+        #define TERNARY_PICK(a, b) a
+    #else
+        #define TERNARY_PICK(a, b) b
+    #endif
 
     LOG("In LINE %d, FUNCTION %s: stack->count = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->count);
 
@@ -449,13 +445,11 @@ int stack_peek(stack_t* stack)
         update_hash(stack);
     #endif
 
-    #ifdef SAFETY
-        STACK_OK(stack);
-        return *((char*) stack->data + sizeof(canary_begin_array_) + (stack->count - 1) * sizeof(elem_t));
-    #else
-        STACK_OK(stack);
-        return *((char*) stack->data + (stack->count - 1) * sizeof(elem_t));
-    #endif
+    elem_t* data_ptr = (elem_t*) TERNARY_PICK((char*) stack->data + sizeof(canary_begin_array_), (char*) stack->data);
+
+    STACK_OK(stack);
+
+    return *(data_ptr + (stack->count - 1) * sizeof(elem_t));
 }
 
 //===================================================================
@@ -465,12 +459,14 @@ int stack_push(stack_t* stack, elem_t value)
     STACK_OK(stack);
 
     #ifdef SAFETY
-        int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) a
     #else
-        int real_capacity = stack->capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) b
     #endif
+
+    int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
+    int real_capacity = stack->capacity - delta;
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
     if(stack->count >= real_capacity)
     {
@@ -512,12 +508,14 @@ int stack_dump(stack_t* stack)
     STACK_OK(stack);
 
     #ifdef SAFETY
-        int real_capacity = stack->capacity - sizeof(canary_begin_array_) / sizeof(elem_t);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) a
     #else
-        int real_capacity = stack->capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+        #define TERNARY_PICK(a, b) b
     #endif
+
+    int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
+    int real_capacity = stack->capacity - delta;
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
     printf("-----------------------------------------------------------\n");
 
@@ -635,6 +633,16 @@ int stack_dump(stack_t* stack)
 int stack_verify(stack_t* stack)
 {
     #ifdef SAFETY
+        #define TERNARY_PICK(a, b) a
+    #else
+        #define TERNARY_PICK(a, b) b
+    #endif
+
+    int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
+    int real_capacity = stack->capacity - delta;
+    LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
+
+    #ifdef SAFETY
         if((stack == NULL) || (&stack->count == NULL) || (&stack->capacity == NULL) || 
            (&stack->canary_1 == NULL) || (&stack->canary_2 == NULL) || (&stack->canary_3 == NULL) || 
            (&stack->error_name == NULL))
@@ -658,42 +666,23 @@ int stack_verify(stack_t* stack)
         }
     #endif
 
-    #ifdef SAFETY
-        int real_capacity = stack->capacity - sizeof(int*) / sizeof(int);
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-        LOG("In LINE %d, FUNCTION %s: stack->count = %d\n", __LINE__, __PRETTY_FUNCTION__, stack->count);
-    #else
-        int real_capacity = stack->capacity;
-        LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-    #endif
-
     if(stack->count > real_capacity)
     {
         stack->error_name |= 1 << ERR_STK_STACK_OVERFLOW;
     }
-
     if((stack->count < 0) || (stack->capacity < 0))
     {
         stack->error_name |= 1 << ERR_STK_NEGATIVE_COUNT;
     }
 
-    #ifdef SAFETY
-        for(int idx = 0; idx < stack->count; ++idx)
+    elem_t* data_ptr = (elem_t*) TERNARY_PICK((char*) stack->data + sizeof(canary_begin_array_), (char*) stack->data);
+    for(int idx = 0; idx < stack->count; ++idx)
+    {
+        if(*((char*) data_ptr + idx * sizeof(elem_t)) == POISON)
         {
-            if(*((char*) stack->data + sizeof(canary_begin_array_) + idx * sizeof(elem_t)) == POISON)
-            {
-                stack->error_name |= 1 << ERR_STK_INC_INPUT;
-            }
+            stack->error_name |= 1 << ERR_STK_INC_INPUT;
         }
-    #else
-        for(int idx = 0; idx < stack->count; ++idx)
-        {
-            if(*((char*) stack->data + idx * sizeof(elem_t)) == POISON)
-            {
-                stack->error_name |= 1 << ERR_STK_INC_INPUT;
-            }
-        }
-    #endif
+    }
 
     #ifdef SAFETY
         hash_stack = hash_FAQ6(stack, sizeof(stack_t));

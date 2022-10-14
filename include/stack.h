@@ -24,8 +24,9 @@
 #undef SAFETY
 #endif
 
-
-typedef int elem_t;
+#ifdef INT
+    typedef int elem_t;
+#endif
 
 #ifdef DOUBLE
     typedef double elem_t;
