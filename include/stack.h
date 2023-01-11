@@ -1,4 +1,4 @@
-
+#pragma once
 #include <stdint.h>
 
 /*! enumeration colors and their corresponding ANSI values. */
@@ -16,12 +16,22 @@
 #define MULTIPLIER_2 1.5
 #define MULTIPLIER_3 1.2
 
-#define POISON 7
+
+#ifdef PTR
+    #define POISON NULL
+#else
+    #define POISON -101
+#endif
+
 
 #define SAFETY 1
 
 #ifdef REMOVE_SAFETY
 #undef SAFETY
+#endif
+
+#ifdef PTR
+    typedef void* elem_t;
 #endif
 
 #ifdef INT

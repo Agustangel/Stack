@@ -13,19 +13,20 @@ int main()
     logger_set_level(INFO);
 
     stack_t stack;
-
-    int init_size = 4;
-
+    int init_size = 10;
     stack_init(&stack, init_size);
 
-    stack_push(&stack, 1);
-    stack_push(&stack, 2);
-    stack_push(&stack, 11);
+    //stack_dump(&stack);
 
-    stack_pop(&stack);
-    stack_pop(&stack);
+    // exit(1);
 
-    stack_dump(&stack);
+    // stack_push(&stack, 1);
+    // stack_push(&stack, 2);
+    // stack_push(&stack, 11);
+    // stack_pop(&stack);
+    // stack_pop(&stack);
+
+    // stack_dump(&stack);
     stack_destroy(&stack);
 
     logger_finalize(file);

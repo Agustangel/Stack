@@ -292,7 +292,11 @@ int stack_resize_decrease(stack_t* stack)
     int delta = TERNARY_PICK(sizeof(canary_begin_array_) / sizeof(elem_t), 0);
     int real_capacity = stack->capacity - delta;
     LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
-    
+    if(real_capacity <= MULTIPLIER_1)
+    {
+        return 0;
+    }
+
     if(flag_multiplier_upper == MULTIPLIER_LARGE)
     {
         flag_multiplier_down = MULTIPLIER_SMALL;
@@ -398,7 +402,7 @@ int stack_pop(stack_t* stack)
     int real_capacity = stack->capacity - delta;
     LOG("In LINE %d, FUNCTION %s: real_capacity = %d\n", __LINE__, __PRETTY_FUNCTION__, real_capacity);
 
-    if(stack->count <= real_capacity / 2)
+    if(stack->count < real_capacity / 2)
     {
         stack_resize_decrease(stack);
     }
@@ -407,11 +411,11 @@ int stack_pop(stack_t* stack)
         update_hash(stack);
     #endif
 
-    elem_t* data_ptr = (elem_t*) TERNARY_PICK((char*) stack->data + sizeof(canary_begin_array_), (char*) stack->data);
+    elem_t* data_ptr = (elem_t*) TERNARY_PICK(((char*) stack->data + sizeof(canary_begin_array_)), (char*) stack->data);
 
     STACK_OK(stack);
     
-    return *(data_ptr + stack->count * sizeof(elem_t));
+    return *(data_ptr + stack->count);
 }
 
 //===================================================================
@@ -445,7 +449,7 @@ int stack_peek(stack_t* stack)
         update_hash(stack);
     #endif
 
-    elem_t* data_ptr = (elem_t*) TERNARY_PICK((char*) stack->data + sizeof(canary_begin_array_), (char*) stack->data);
+    elem_t* data_ptr = (elem_t*) TERNARY_PICK(((char*) stack->data + sizeof(canary_begin_array_)), ((char*) stack->data));
 
     STACK_OK(stack);
 
@@ -475,7 +479,7 @@ int stack_push(stack_t* stack, elem_t value)
 
     elem_t* skip_canary_data = stack->data;
     #ifdef SAFETY
-        skip_canary_data = (elem_t*) ((char*) stack->data + sizeof(canary_begin_array_));
+        skip_canary_data = (elem_t*) ((char*) stack->data + sizeof(canary_begin_array_) / sizeof(char));
     #endif
 
     #ifdef DOUBLE
@@ -583,6 +587,8 @@ int stack_dump(stack_t* stack)
         printf("canary_begin_array_ = %p \t %p\n", canary_begin_array_, &canary_begin_array_);
         printf("hash_stack = %d\t\t\t %p\n", hash_stack, &hash_stack);
         printf("hash_data  = %d\t\t\t %p\n", hash_data, &hash_data);
+        printf("previous_hash_stack = %d\t\t\t %p\n", previous_hash_stack, &previous_hash_stack);
+        printf("previous_hash_data  = %d\t\t\t %p\n", previous_hash_data, &previous_hash_data);
         printf("\n");
 
         printf("-----------------------------------------------------------\n");
@@ -675,11 +681,12 @@ int stack_verify(stack_t* stack)
         stack->error_name |= 1 << ERR_STK_NEGATIVE_COUNT;
     }
 
-    elem_t* data_ptr = (elem_t*) TERNARY_PICK((char*) stack->data + sizeof(canary_begin_array_), (char*) stack->data);
+    elem_t* data_ptr = (elem_t*) TERNARY_PICK(((char*) stack->data + sizeof(canary_begin_array_)), (char*) stack->data);
     for(int idx = 0; idx < stack->count; ++idx)
     {
         if(*((char*) data_ptr + idx * sizeof(elem_t)) == POISON)
         {
+            printf("STACK ALALAL\n");
             stack->error_name |= 1 << ERR_STK_INC_INPUT;
         }
     }
@@ -713,10 +720,6 @@ int stack_verify(stack_t* stack)
         }
     #endif
 
-    if((stack->error_name > 0) || (stack->error_name < -10))
-    {
-        stack->error_name |= 1 << ERR_STK_INC_ERRNAME;
-    }
 
     return 0;
 }
